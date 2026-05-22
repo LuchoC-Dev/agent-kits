@@ -80,4 +80,19 @@ Contiene toda la información necesaria para presentar opciones al usuario.
 | bdd | Behavior-Driven Development — escenarios Given/When/Then antes de implementar. |
 | contract-first | API-first — contrato (OpenAPI/schema/proto) congelado antes de implementar cualquier lado. |
 | trunk-based | Trunk-based development — ramas cortas, commits chicos, trunk siempre verde. |
-| sdd | Spec-Driven Development — la spec (intent/scope/requirements/design/tasks) antecede al código. Delega al ecosistema externo `sdd-flow`. |
+| sdd | Spec-Driven Development — la spec antecede al código. Compone el ecosistema `sdd-*` (ver abajo). |
+
+### SDD — sub-skills del ecosistema (compuestas por la disciplina `sdd`)
+| id | descripción |
+|---|---|
+| sdd-flow | Orquestador del ciclo SDD completo (explorar → proponer → spec → design → tasks → apply → verify → archive). |
+| sdd-init | Bootstrap del contexto SDD en un proyecto: detección de stack, convenciones, backend de specs. |
+| sdd-explore | Investigación previa antes de comprometerse a un cambio. |
+| sdd-propose | Crea una proposal: intent, scope, approach. |
+| sdd-spec | Escribe requirements y scenarios (delta specs). |
+| sdd-design | Documento de diseño técnico con decisiones de arquitectura. |
+| sdd-tasks | Quiebra el cambio en checklist de tareas ejecutables. |
+| sdd-apply | Implementa las tareas siguiendo specs y design. |
+| sdd-verify | Valida que la implementación cumple specs, design y tasks. |
+| sdd-archive | Sincroniza delta specs a specs principales y archiva el cambio. |
+| spec-driven-development | Versión genérica/intro a SDD para proyectos sin contexto previo. |

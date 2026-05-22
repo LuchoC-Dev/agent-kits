@@ -1,9 +1,19 @@
 ---
 name: sdd
-description: Disciplina Spec-Driven Development — la spec (intent, scope, requirements, design, tasks) es la fuente de verdad y antecede a la implementación. Delegada al ecosistema externo `sdd-flow` y sus sub-skills (sdd-init, sdd-explore, sdd-propose, sdd-spec, sdd-design, sdd-tasks, sdd-apply, sdd-verify, sdd-archive). Trigger cuando el proyecto tiene `sdd` en las disciplinas activas, o el usuario pide "SDD", "spec-driven", "spec primero", "OpenSpec", "iniciar sdd", "sdd init", o quiere proponer/diseñar/implementar un cambio bajo el flujo de specs.
+description: Disciplina Spec-Driven Development — la spec (intent, scope, requirements, design, tasks) es la fuente de verdad y antecede a la implementación. Compuesta por el orquestador `sdd-flow` y sus sub-skills (sdd-init, sdd-explore, sdd-propose, sdd-spec, sdd-design, sdd-tasks, sdd-apply, sdd-verify, sdd-archive). Trigger cuando el proyecto tiene `sdd` en las disciplinas activas, o el usuario pide "SDD", "spec-driven", "spec primero", "OpenSpec", "iniciar sdd", "sdd init", o quiere proponer/diseñar/implementar un cambio bajo el flujo de specs.
 discipline: true
 combinable: true
-delegates_to: sdd-flow
+composes:
+  - sdd-flow
+  - sdd-init
+  - sdd-explore
+  - sdd-propose
+  - sdd-spec
+  - sdd-design
+  - sdd-tasks
+  - sdd-apply
+  - sdd-verify
+  - sdd-archive
 ---
 
 # SDD — Spec-Driven Development
@@ -14,10 +24,10 @@ Sos un practicante de spec-driven development. Tu trabajo es asegurar que **toda
 
 ## Naturaleza de esta skill
 
-Es una **skill de disciplina** y un **puente**: no contiene el procedimiento SDD acá. El procedimiento ya vive maduro en el ecosistema externo de skills `sdd-*` (especialmente `sdd-flow` como orquestador). Esta skill:
+Es una **skill de disciplina** y un **puente**: no contiene el procedimiento SDD acá. El procedimiento vive en el ecosistema de skills `sdd-*` (especialmente `sdd-flow` como orquestador) que están en el mismo catálogo del workspace. Esta skill:
 
 1. Registra SDD como una disciplina activa del workspace.
-2. Le indica al workflow / agente cuándo y cómo invocar el ecosistema externo.
+2. Le indica al workflow / agente cuándo y cómo invocar las skills `sdd-*` del catálogo.
 
 Es agnóstica al flujo: el workflow del pack decide en qué momento dispararla.
 
@@ -29,13 +39,13 @@ Se aplica cuando `sdd` está en el campo `disciplines` de `workspace.json`. El w
 
 ### Paso 1 — Inicialización (una sola vez)
 
-Al activar SDD en un proyecto por primera vez, invocá la skill externa `sdd-init` para bootstrappear el contexto SDD (detección de stack, convenciones, backend de persistencia de specs).
+Al activar SDD en un proyecto por primera vez, invocá la skill `sdd-init` para bootstrappear el contexto SDD (detección de stack, convenciones, backend de persistencia de specs).
 
 ### Paso 2 — Para cada cambio, ejecutá el ciclo SDD
 
-Delegá al orquestador externo `sdd-flow`, que conduce el ciclo completo:
+Delegá al orquestador `sdd-flow`, que conduce el ciclo completo:
 
-| Fase | Skill externa | Output |
+| Fase | Skill | Output |
 |---|---|---|
 | Explorar | `sdd-explore` | Investigación previa, clarificación |
 | Proponer | `sdd-propose` | Proposal: intent, scope, approach |
@@ -46,7 +56,7 @@ Delegá al orquestador externo `sdd-flow`, que conduce el ciclo completo:
 | Verificar | `sdd-verify` | Validación spec ↔ código |
 | Archivar | `sdd-archive` | Sync de delta specs a specs principales |
 
-No reimplementes ninguno de esos pasos acá. Invocá la skill externa correspondiente.
+No reimplementes ninguno de esos pasos acá. Invocá la skill correspondiente del catálogo.
 
 ### Paso 3 — Mantener la spec sincronizada
 
@@ -73,8 +83,8 @@ SDD es combinable con todas:
 
 - No implementar cambios no triviales sin pasar por `sdd-propose` → `sdd-spec` → `sdd-design` → `sdd-tasks` antes de `sdd-apply`.
 - No omitir `sdd-verify`: el archivado requiere verificación previa.
-- No reimplementar el ciclo SDD acá — siempre delegar a las skills externas `sdd-*`.
+- No reimplementar el ciclo SDD acá — siempre delegar a las skills `sdd-*` del catálogo.
 
 ## Nota de implementación
 
-Las skills `sdd-init`, `sdd-flow`, `sdd-explore`, `sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive` y `spec-driven-development` viven en el entorno externo (no en el catálogo de `app-init`). Esta disciplina solo las registra y delega; no las redefine.
+Las skills `sdd-init`, `sdd-flow`, `sdd-explore`, `sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive` viven en el mismo catálogo (`skills/<id>/`) y se instalan automáticamente en cualquier workspace que active la disciplina `sdd`. Esta skill es el punto de entrada que el workflow invoca; el resto del ciclo lo conduce `sdd-flow`.
