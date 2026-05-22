@@ -73,10 +73,11 @@ Contiene toda la información necesaria para presentar opciones al usuario.
 | build-progress | Documentación del progreso mientras se construye. |
 | find-docs | Búsqueda de documentación técnica relevante. |
 
-### Disciplinas (`discipline: true`, `combinable: true`)
+### Disciplinas (`discipline: true` , `combinable: true`)
 | id | descripción |
 |---|---|
 | tdd | Test-Driven Development — ciclo red → green → refactor. El test falla antes del código. |
 | bdd | Behavior-Driven Development — escenarios Given/When/Then antes de implementar. |
 | contract-first | API-first — contrato (OpenAPI/schema/proto) congelado antes de implementar cualquier lado. |
 | trunk-based | Trunk-based development — ramas cortas, commits chicos, trunk siempre verde. |
+| sdd | Spec-Driven Development — la spec (intent/scope/requirements/design/tasks) antecede al código. Delega al ecosistema externo `sdd-flow`. |
