@@ -330,7 +330,7 @@ context  →  design          ┐
 
 ---
 
-## 6. Las 39 skills del pool global
+## 6. Las 51 skills del pool global
 
 **Context (6):** `problem-framing`, `stakeholders-map`, `domain-modeling`,
 `job-stories`, `vision`, `assumptions-risks`.
@@ -349,9 +349,14 @@ context  →  design          ┐
 
 **Transversales (4):** `find-docs`, `build-progress`, `brainstorming`, `ui-ux-pro-max`.
 
-**Disciplinas de desarrollo (4):** `tdd`, `bdd`, `contract-first`, `trunk-based`.
+**Disciplinas de desarrollo (5):** `tdd`, `bdd`, `contract-first`, `trunk-based`, `sdd`.
 Skills de disciplina (`discipline: true`) — rigen *cómo* se ejecuta el desarrollo, no
-producen documento-artefacto. Ver §4.7.
+producen documento-artefacto. Ver §4.7. La disciplina `sdd` compone el ecosistema SDD
+(abajo).
+
+**Ecosistema SDD (11):** `sdd-flow` (orquestador), `sdd-init`, `sdd-explore`,
+`sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`,
+`sdd-archive`, `spec-driven-development`. Compuestas por la disciplina `sdd`.
 
 ---
 
@@ -434,13 +439,20 @@ Ver §4.8 para las decisiones de diseño del rediseño skill → agente.
 - **Skills de disciplina de desarrollo** creadas en el pool global: `tdd`, `bdd`, `contract-first`, `trunk-based` (`discipline: true`, `combinable: true`). Ver §4.7.
 - **Workflows `feature-development`** de `backend` y `frontend` modificados: paso 0 `disciplines-check` que lee `workspace.json`; tabla de puntos de enganche; invocación condicional de cada disciplina activa; paso `behavior-spec` condicional a `bdd`.
 - **`app-init` rediseñado de skill a agente** (ver §4.8): `SKILL.md` reescrito como thin launcher; `agent.md` nuevo con identidad, principios y el flujo completo; Fase 4bis de disciplinas (detección + confirmación); `workspace.json` schema v2 con campo `disciplines`.
+- **`catalog-index.md` creado** como índice plano del catálogo (packs + skills con descripciones de una línea). Reemplaza el patrón de `ls + read pack.md/SKILL.md` por una sola lectura. `catalog-author` lo mantiene en `create-skill` y `create-pack`.
+- **Disciplina SDD** agregada al pool (`skills/sdd/`, `discipline: true`, `combinable: true`); 11 skills del ecosistema SDD copiadas al catálogo local (`sdd-flow`, `sdd-init`, `sdd-explore`, `sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive`, `spec-driven-development`). Catálogo autocontenido — no depende de skills externas. Total: 51 skills.
+- **Workspace renombrado de `.my-system/` a `.agents/`** — convención estándar OpenCode. Workspaces generados ahora cross-compatibles Claude Code ↔ OpenCode.
+- **Env var `MY_SYSTEM_HOME` eliminada.** `<global>` = `<base_dir>` siempre (catálogo embebido en `app-init/`). `SKILL.md` simplificado: una línea, sin Bash, sin fallbacks.
+- **Detección de runtime** (Fase 1.1 de `agent.md`): vía env vars (`CLAUDECODE`, `OPENCODE`); resultado persistido en `workspace.json → runtime`. Mapeo de tool de preguntas: `claude-code → AskUserQuestion`, `opencode → question`, `unknown → chat plano numerado`. Cascada aplicada a `meta/catalog-author.md` (regla), `PROJECT-CONTEXT.md` (glosario), `workflows/context-building.md` e `skills/information-architecture/SKILL.md`.
+- **Repo Git inicializado** en `app-init/` con `.gitignore` excluyendo `tests/sandbox*/`. Convención de commits: separar por tema, no agrupar.
 
 ## 10. Trabajo pendiente
 
+- [ ] **Verificación end-to-end** del flujo `/app-init` en sandbox nuevo: confirmar detección de runtime, instalación de packs/skills, generación de `workspace.json` con campo `runtime`, y omisión de Fase 4bis cuando no hay packs de implementación.
+- [ ] **README del repo** (entry-point delgado que linkee a `PROJECT-CONTEXT.md` para deep dive). Baja prioridad.
 - [ ] **Tools skills** (`git-commit`, `branch-pr`, `gh-cli`, `environment-setup`,
   `docker-expert`, `taskfile-setup`, y transversales): podrían recibir `consumes:` /
   `produces:`. Opcional — no tenían referencias de fase, así que quedaron sin tocar.
-- [ ] **Agentes de Clase 2:** todos los planificados están implementados e integrados. Ver §3, §4.6 y el contrato de invocación (§3 "Contrato de invocación") si se agregan nuevos.
 
 ---
 
