@@ -36,7 +36,7 @@ Este workflow obliga a explicitar lo implícito. Después de pasarlo, cualquier 
 
 ## Configuración — dos ejes
 
-Antes de arrancar, el agente `context-builder` pregunta **dos cosas** (juntas, con `AskUserQuestion` si está disponible):
+Antes de arrancar, el agente `context-builder` pregunta **dos cosas juntas** usando la tool de preguntas estructuradas del runtime (lee `.agents/workspace.json → runtime`: `claude-code → AskUserQuestion`, `opencode → question`, `unknown → chat plano numerado`):
 
 ### Eje 1 — Profundidad
 
