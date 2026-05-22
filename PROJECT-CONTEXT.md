@@ -295,7 +295,8 @@ Decisiones de diseño tomadas:
   `app-init` (`agent.md`) en contexto propio. Todo el flujo real vive en el agente.
 - **Flujo enriquecido + disciplinas.** El agente agrega la **Fase 4bis — Disciplinas de
   desarrollo**: detecta señales del stack (`.feature`→bdd, `openapi.*`→contract-first,
-  config de tests→tdd) y **propone**; el usuario confirma o ajusta con `AskUserQuestion`.
+  config de tests→tdd) y **propone**; el usuario confirma o ajusta con la tool de
+  preguntas estructuradas del runtime (ver glosario → `runtime`).
 - **`workspace.json` schema v2.** Nuevo campo `disciplines: [...]` — fuente de verdad de
   las disciplinas activas, leído por los workflows `feature-development`. Un workspace v1
   sin el campo se trata como `disciplines: []`; la Fase 6 (Upgrade) lo agrega.
@@ -459,4 +460,5 @@ Ver §4.8 para las decisiones de diseño del rediseño skill → agente.
 | **`app-init`** | Agente de inicialización — punto de entrada del sistema. `SKILL.md` (thin launcher) + `agent.md` (el agente). Ver §8. |
 | **Skill de disciplina** | Skill con `discipline: true` que rige *cómo* se desarrolla (tdd, bdd, contract-first, trunk-based); no produce documento-artefacto. |
 | **`disciplines`** | Campo de `workspace.json` (schema v2); ids de las disciplinas activas del proyecto. |
+| **`runtime`** | Campo de `workspace.json` que registra el entorno detectado (`claude-code` / `opencode` / `unknown`). Cada agente/workflow que pregunte al usuario lo lee y mapea a la tool nativa: `claude-code → AskUserQuestion`, `opencode → question`, `unknown → chat plano numerado`. |
 | **AI-first** | El agente es el runtime; todo es Markdown; no hay motor. |
