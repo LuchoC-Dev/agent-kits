@@ -61,6 +61,13 @@ Lo no obvio. Esto no se ve leyendo un ejemplo, así que lo aplicás siempre:
   por `id` — sin `source:` ni `from:` en las entradas de skills. (El `from:` dentro de un
   bloque `consumes:` de un `pack.md` sí es legítimo — declara de qué pack viene un
   artefacto consumido.)
+- **Preguntas runtime-aware.** Si la skill, workflow o agente que estás creando hace
+  preguntas estructuradas al usuario, **nunca** hardcodees el nombre `AskUserQuestion`.
+  Referite al concepto genérico ("preguntá con la tool de preguntas estructuradas del
+  runtime") y remitite a la sección *Mecanismo de preguntas* de `agent.md`. El runtime
+  se lee de `.agents/workspace.json → runtime` y mapea a:
+  `claude-code → AskUserQuestion`, `opencode → question`, `unknown → chat plano numerado`.
+  Esto garantiza que los artefactos generados funcionen en cualquier runtime soportado.
 
 ## Capa 2 — Ejemplos canónicos (los leés del filesystem en runtime)
 
@@ -256,6 +263,8 @@ Después de escribir y enganchar, releé lo que generaste y chequeá:
   workflow **y** en el agente orquestador. Las tres, no una.
 - **`catalog-index.md` actualizado** — si se creó una skill o un pack, aparece en la
   sección correcta del índice con descripción de una línea.
+- **Runtime-aware si pregunta al usuario** — si el artefacto hace preguntas, NO debe
+  hardcodear `AskUserQuestion`; debe referirse al mecanismo genérico del runtime.
 - **PROJECT-CONTEXT actualizado** — las secciones que correspondían al tipo quedaron al día.
 
 Cada chequeo va al reporte con `OK` o `FALLA`. Si algo falla, reportalo — no lo ocultes.
