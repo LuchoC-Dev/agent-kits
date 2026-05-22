@@ -70,7 +70,7 @@ workflows:
 
 # Backend Pack
 
-Pack de capacidades para proyectos backend. Al instalarse, distribuye sus skills, agentes y workflows en las carpetas canónicas del workspace (`.my-system/skills/`, `.my-system/agents/`, `.my-system/workflows/`).
+Pack de capacidades para proyectos backend. Al instalarse, distribuye sus skills, agentes y workflows en las carpetas canónicas del workspace (`.agents/skills/`, `.agents/agents/`, `.agents/workflows/`).
 
 ## Skills incluidas
 

@@ -12,7 +12,7 @@
 
 Es un **sistema AI-first de workspaces** basado en **skills** y **packs** escritos en
 Markdown. Sirve para que, al entrar a un proyecto de software, un agente pueda
-**bootstrapear un espacio de trabajo estructurado** (`.my-system/`) con memoria,
+**bootstrapear un espacio de trabajo estructurado** (`.agents/`) con memoria,
 contexto, agentes, skills y workflows, y después **ejecutar fases de diseño e
 implementación** de manera guiada y reproducible.
 
@@ -148,7 +148,7 @@ uses_agents:
 ```
 
 **Resolución de id:** igual que las skills. Al instalar un pack, `app-init` resuelve
-cada `id` contra `<global>/agents/<id>.md` y lo copia a `.my-system/agents/`. Los
+cada `id` contra `<global>/agents/<id>.md` y lo copia a `.agents/agents/`. Los
 agentes `meta/` **nunca se distribuyen**.
 
 **Patrón de delegación:** el orquestador invoca el agente Clase 2 como sub-agente
@@ -399,7 +399,7 @@ compone de dos archivos en la raíz `app-init/`:
 - **`agent.md`** — el **agente** propiamente dicho: identidad, principios y todo el flujo
   de inicialización (6 fases + Fase 4bis de disciplinas).
 
-Su responsabilidad es **inicializar `.my-system/`** en el directorio actual de forma
+Su responsabilidad es **inicializar `.agents/`** en el directorio actual de forma
 conversacional y guiada: detecta el stack, descubre packs y skills del sistema global,
 pregunta por la composición y por las disciplinas de desarrollo, y registra todas las
 decisiones en `workspace.json` (schema v2, con campo `disciplines`).
@@ -454,7 +454,7 @@ Ver §4.8 para las decisiones de diseño del rediseño skill → agente.
 | **`consumes` / `produces`** | Contrato declarativo de input/output de skills y packs. |
 | **`NN-`** | Placeholder de prefijo numérico; lo resuelve el workflow. |
 | **Pool global** | `app-init/skills/` — todas las skills, plano, compartido. |
-| **`.my-system/`** | Workspace que `app-init` genera en cada proyecto. |
+| **`.agents/`** | Workspace que `app-init` genera en cada proyecto. |
 | **`app-init`** | Agente de inicialización — punto de entrada del sistema. `SKILL.md` (thin launcher) + `agent.md` (el agente). Ver §8. |
 | **Skill de disciplina** | Skill con `discipline: true` que rige *cómo* se desarrolla (tdd, bdd, contract-first, trunk-based); no produce documento-artefacto. |
 | **`disciplines`** | Campo de `workspace.json` (schema v2); ids de las disciplinas activas del proyecto. |
