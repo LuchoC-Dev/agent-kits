@@ -39,22 +39,31 @@ proyecto actual. No actuás proactivamente en ningún otro contexto.
 
 ## Fase 1 — Detección de estado
 
-1. Verificá si existe `.agents/` en el cwd.
+1. **Detectá el runtime.** Ejecutá con Bash una sola vez:
+   `echo "CC=$CLAUDECODE OC=$OPENCODE"`
+   - Si `CC=1` → `runtime = "claude-code"`.
+   - Si `OC` tiene valor no vacío → `runtime = "opencode"`.
+   - En otro caso → `runtime = "unknown"`.
+
+   El valor se guarda en `workspace.json → runtime` al cierre. Determina qué mecanismo
+   de preguntas usar más adelante: `claude-code` usa `AskUserQuestion`; el resto cae a
+   preguntas en chat plano (numeradas, una respuesta por línea).
+2. Verificá si existe `.agents/` en el cwd.
    - **Existe** → saltá a *Fase 6 (Workspace existente)*.
    - **No existe** → continuá.
-2. Detectá el stack leyendo, en este orden, lo que esté disponible:
+3. Detectá el stack leyendo, en este orden, lo que esté disponible:
    - `package.json` → `dependencies` / `devDependencies` (React, Vue, Next, Vite,
      Express, etc.).
    - `pyproject.toml` / `requirements.txt` → Python + framework.
    - `pom.xml` / `build.gradle` → Java/Kotlin + framework.
    - `Cargo.toml`, `go.mod`, `composer.json`, etc.
-3. Detectá si el directorio está **vacío** (sin archivos relevantes salvo `.git`,
+4. Detectá si el directorio está **vacío** (sin archivos relevantes salvo `.git`,
    `README`, dotfiles).
-4. **Catálogo global (`<global>`):** el launcher ya lo resolvió — es el directorio base
+5. **Catálogo global (`<global>`):** el launcher ya lo resolvió — es el directorio base
    de la skill app-init. Leé `<global>/catalog-index.md` con Read; ese archivo tiene
    todos los packs y skills con sus descripciones. **No hagas `ls` ni leas `pack.md` ni
    `SKILL.md` individuales.** Si el archivo no existe, marcá `catalog_empty = true`.
-5. **Registrá las señales de disciplinas** para la Fase 4bis (no preguntes todavía):
+6. **Registrá las señales de disciplinas** para la Fase 4bis (no preguntes todavía):
    - `**/*.feature` presentes → señal de `bdd`.
    - `openapi.yaml` / `openapi.json` / `swagger.*` / carpeta `proto/` → señal de
      `contract-first`.
@@ -211,6 +220,7 @@ Si el usuario no instala ningún pack ni skill (custom-empty), el resultado fina
   "created_at": "<ISO 8601>",
   "updated_at": "<ISO 8601>",
   "system_version": "0.1.0",
+  "runtime": "claude-code | opencode | unknown",
   "pack": {
     "name": "<pack-id o 'custom' o 'custom-empty'>",
     "source": "<ruta al pack en global, o null si custom>",
@@ -238,6 +248,11 @@ Si el usuario no instala ningún pack ni skill (custom-empty), el resultado fina
 }
 ```
 
+> **`runtime`** — entorno donde se inicializó el workspace. Detectado en Fase 1 paso 1
+> vía env vars (`CLAUDECODE`, `OPENCODE`). Lo usan agentes y workflows para elegir
+> mecanismos: `claude-code` habilita `AskUserQuestion`, `ScheduleWakeup`, `TaskCreate`;
+> `opencode` y `unknown` deben caer a alternativas en chat plano.
+>
 > **`disciplines`** — array de ids de skills de disciplina activas en el proyecto. Lo
 > leen los workflows de implementación (`feature-development`) para invocar
 > condicionalmente cada disciplina. Vacío `[]` si el proyecto no usa ninguna. Es la
