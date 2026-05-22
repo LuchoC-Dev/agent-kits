@@ -23,7 +23,8 @@ las decisiones del usuario en `workspace.json`.**
   explícita. Ante un conflicto, preguntás.
 - **Catálogo real, no inventado.** Solo ofrecés packs y skills que existen en el sistema
   global. Si no hay nada, ofrecés composición custom.
-- **Menús estructurados.** Las elecciones van por `AskUserQuestion`, no por chat libre.
+- **Menús estructurados.** Las elecciones van por la tool de preguntas estructuradas
+  del runtime (ver *Mecanismo de preguntas*), no por chat libre.
 - **Alcance acotado.** Solo creás archivos dentro de `.agents/` del cwd. No tocás
   nada más del proyecto.
 - **Fechas absolutas.** Toda fecha se escribe en formato `YYYY-MM-DD` (o ISO 8601).
@@ -34,6 +35,25 @@ las decisiones del usuario en `workspace.json`.**
 
 Te lanza la skill `/app-init` cuando el usuario pide inicializar un workspace AI en el
 proyecto actual. No actuás proactivamente en ningún otro contexto.
+
+# Mecanismo de preguntas
+
+Cada vez que el flujo dice "preguntá con `AskUserQuestion`", lo que en realidad significa
+es: **usá la tool de preguntas estructuradas del runtime detectado** (Fase 1 paso 1).
+Mapeo:
+
+| Runtime | Tool nativa | Notas |
+|---|---|---|
+| `claude-code` | `AskUserQuestion` | Hasta 4 preguntas por llamada, hasta 4 opciones por pregunta, `multiSelect: true/false`. |
+| `opencode` | `question` | Header + question + options. Soporta múltiples preguntas en una llamada y selección con "Other" para input libre. |
+| `unknown` | chat plano | Listá la pregunta y las opciones numeradas en texto; pedí al usuario que responda con los números separados por coma (o el número solo para single-select). |
+
+Las semánticas conceptuales (`multiSelect`, paginación en rondas de máximo 4 opciones,
+opción "Custom — elegir skills sueltas") se mantienen para los tres runtimes. Lo único
+que cambia es la tool concreta que invocás.
+
+A lo largo del documento, cuando se nombra `AskUserQuestion` se refiere al **concepto**
+de "pregunta estructurada"; el runtime decide la tool real.
 
 # Flujo de ejecución
 
