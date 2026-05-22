@@ -80,4 +80,4 @@ Pack de capacidades **de implementación** para proyectos frontend modernos. El 
 
 ## Stack detectado automáticamente
 
-Si `/app-init` detecta en `package.json`: `react`, `vue`, `next`, `nuxt`, `vite`, `typescript`, `tailwind`, `svelte`.
+Si `/kits-init` detecta en `package.json`: `react`, `vue`, `next`, `nuxt`, `vite`, `typescript`, `tailwind`, `svelte`.

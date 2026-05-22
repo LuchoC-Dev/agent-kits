@@ -37,10 +37,10 @@ y llevarlo de forma ordenada desde el **descubrimiento del producto** hasta el
 Directorio raíz del sistema:
 
 ```
-.claude/skills/app-init/
+.claude/skills/kits-init/
 ```
 
-> Nota: durante el testing local todo se movió bajo `.claude/skills/app-init/` para que
+> Nota: durante el testing local todo se movió bajo `.claude/skills/kits-init/` para que
 > Claude Code lo auto-descubra. El catálogo (`packs/`, `skills/`, `agents/`,
 > `catalog-index.md`) vive como hermano de `SKILL.md` dentro de la misma carpeta de la
 > skill — por eso `<global>` = `<base_dir>` y no hace falta env var. Claude Code
@@ -49,9 +49,9 @@ Directorio raíz del sistema:
 ### Árbol actual
 
 ```
-app-init/
-├── SKILL.md                  ← thin launcher: trigger /app-init, lanza el agente
-├── agent.md                  ← el agente app-init (todo el flujo de inicialización)
+kits-init/
+├── SKILL.md                  ← thin launcher: trigger /kits-init, lanza el agente
+├── agent.md                  ← el agente kits-init (todo el flujo de inicialización)
 ├── PROJECT-CONTEXT.md        ← este archivo
 ├── skills/                   ← POOL GLOBAL de skills (35 skills, plano)
 │   ├── <skill-id>/SKILL.md
@@ -126,7 +126,7 @@ Hay **dos clases de agente**, y la clase determina dónde vive:
 | **2 — Agente de tarea específica** | Especialista en *una* tarea acotada (ej. un agente de wireframe, un validador de reglas del proyecto). No orquesta un workflow. | **No** — agnóstico | **Pool global** `agents/` si es general o reusado; en el pack si es exclusivo de él |
 
 Además, existe una clase aparte de agente que **no opera sobre proyectos de usuario sino
-sobre el catálogo del sistema app-init en sí mismo**:
+sobre el catálogo del sistema kits-init en sí mismo**:
 
 | Clase | Qué es | Dónde vive |
 |---|---|---|
@@ -148,7 +148,7 @@ uses_agents:
   - design-critic
 ```
 
-**Resolución de id:** igual que las skills. Al instalar un pack, `app-init` resuelve
+**Resolución de id:** igual que las skills. Al instalar un pack, `kits-init` resuelve
 cada `id` contra `<global>/agents/<id>.md` y lo copia a `.agents/agents/`. Los
 agentes `meta/` **nunca se distribuyen**.
 
@@ -201,7 +201,7 @@ Distinción importante que se mantuvo:
 `packs/frontend/skills/`. Eso prueba que la ubicación per-pack estaba mal.
 
 **Ahora:** todas las skills viven en un único **pool global plano**:
-`app-init/skills/<id>/SKILL.md` (35 skills únicas, `find-docs` deduplicada).
+`kits-init/skills/<id>/SKILL.md` (35 skills únicas, `find-docs` deduplicada).
 
 Cada `pack.md` referencia las skills **solo por `id`**. Se eliminaron los mecanismos
 `source: ./skills/<id>/SKILL.md` y `from: <pack>` de las entradas de skills. Al instalar
@@ -279,20 +279,20 @@ La skill queda **agnóstica al flujo** — describe la técnica, igual que `git-
 describe cómo commitear sin saber que es el paso 8. El workflow es el único que conoce
 dónde se enchufa cada disciplina.
 
-### 4.8 — `app-init` rediseñado de skill a agente (decisión 2026-05-22)
+### 4.8 — `kits-init` rediseñado de skill a agente (decisión 2026-05-22)
 
-`app-init` era una **skill orquestadora**: el `SKILL.md` contenía todo el procedimiento
+`kits-init` era una **skill orquestadora**: el `SKILL.md` contenía todo el procedimiento
 de bootstrap. Se decidió convertirlo en un **agente** — un actor con identidad que corre
 en contexto propio y conduce al usuario, pregunta por pregunta, en armar su workspace.
 
 Decisiones de diseño tomadas:
 
-- **Taxonomía: caso único raíz.** `app-init` no es Clase 1, ni Clase 2, ni Meta — es el
+- **Taxonomía: caso único raíz.** `kits-init` no es Clase 1, ni Clase 2, ni Meta — es el
   **punto de entrada del sistema**. No se abrió una categoría nueva: es un agente especial
-  que vive en la raíz `app-init/` como `agent.md`.
+  que vive en la raíz `kits-init/` como `agent.md`.
 - **Invocación: thin launcher.** El `SKILL.md` se reescribió como un **lanzador delgado**:
-  conserva el trigger `/app-init` y "cuándo actuar", y su única acción es lanzar el agente
-  `app-init` (`agent.md`) en contexto propio. Todo el flujo real vive en el agente.
+  conserva el trigger `/kits-init` y "cuándo actuar", y su única acción es lanzar el agente
+  `kits-init` (`agent.md`) en contexto propio. Todo el flujo real vive en el agente.
 - **Flujo enriquecido + disciplinas.** El agente agrega la **Fase 4bis — Disciplinas de
   desarrollo**: detecta señales del stack (`.feature`→bdd, `openapi.*`→contract-first,
   config de tests→tdd) y **propone**; el usuario confirma o ajusta con la tool de
@@ -396,12 +396,12 @@ Reglas que sigue **toda** skill ya limpiada:
 
 ---
 
-## 8. El agente `app-init` (bootstrap)
+## 8. El agente `kits-init` (bootstrap)
 
-`app-init` es el **agente de inicialización** del sistema — el punto de entrada. Se
-compone de dos archivos en la raíz `app-init/`:
+`kits-init` es el **agente de inicialización** del sistema — el punto de entrada. Se
+compone de dos archivos en la raíz `kits-init/`:
 
-- **`SKILL.md`** — *thin launcher*. Conserva el trigger `/app-init` y "cuándo actuar". Su
+- **`SKILL.md`** — *thin launcher*. Conserva el trigger `/kits-init` y "cuándo actuar". Su
   única acción es **lanzar el agente** en contexto propio. No contiene procedimiento.
 - **`agent.md`** — el **agente** propiamente dicho: identidad, principios y todo el flujo
   de inicialización (6 fases + Fase 4bis de disciplinas).
@@ -423,13 +423,13 @@ Ver §4.8 para las decisiones de diseño del rediseño skill → agente.
 
 ✅ **Completado:**
 
-- 35 skills en el pool global plano `app-init/skills/`.
+- 35 skills en el pool global plano `kits-init/skills/`.
 - Packs reducidos a `pack.md + agents/ + workflows/`; referencian skills solo por `id`.
 - Eliminados `source:` y `from:` de las entradas de skills en los `pack.md`.
 - 25 skills limpiadas de conocimiento de flujo (títulos, descripciones, prosa).
 - Frontmatter `consumes:` / `produces:` formalizado en esas 25 skills.
 - Convención `NN-` aplicada en todas las skills, incluidas las de `context`.
-- `app-init/SKILL.md` actualizado al modelo de pool global y al pool `agents/` (Clase 2 se resuelve por `id` contra `<global>/agents/`; `meta/` no se distribuye nunca).
+- `kits-init/SKILL.md` actualizado al modelo de pool global y al pool `agents/` (Clase 2 se resuelve por `id` contra `<global>/agents/`; `meta/` no se distribuye nunca).
 - Verificación: cero referencias "Fase N" y cero paths `01-06` hardcoded en las skills.
 - Pool global `agents/` creado (hermano de `skills/`). Agentes de Clase 2 en pool global: `artifact-validator`, `design-critic`, `research-scout`, `wireframe-renderer`. Agente de Clase 2 exclusivo de pack: `cross-track-auditor` (en `packs/fullstack-design/agents/`).
 - Carpeta `meta/` creada para agentes de autoría del sistema. Primer agente meta: `catalog-author` — crea skills/agentes/workflows/packs desde un brief detallado y los engancha en todas sus referencias.
@@ -438,17 +438,17 @@ Ver §4.8 para las decisiones de diseño del rediseño skill → agente.
 - **Numeración `NN` unificada** en los 4 workflows: frontmatter usa `NN-*.md`; tablas de modos son la única fuente de verdad de los números; columnas `NN` explícitas en `backend-design` y `context-building`.
 - **Skills de disciplina de desarrollo** creadas en el pool global: `tdd`, `bdd`, `contract-first`, `trunk-based` (`discipline: true`, `combinable: true`). Ver §4.7.
 - **Workflows `feature-development`** de `backend` y `frontend` modificados: paso 0 `disciplines-check` que lee `workspace.json`; tabla de puntos de enganche; invocación condicional de cada disciplina activa; paso `behavior-spec` condicional a `bdd`.
-- **`app-init` rediseñado de skill a agente** (ver §4.8): `SKILL.md` reescrito como thin launcher; `agent.md` nuevo con identidad, principios y el flujo completo; Fase 4bis de disciplinas (detección + confirmación); `workspace.json` schema v2 con campo `disciplines`.
+- **`kits-init` rediseñado de skill a agente** (ver §4.8): `SKILL.md` reescrito como thin launcher; `agent.md` nuevo con identidad, principios y el flujo completo; Fase 4bis de disciplinas (detección + confirmación); `workspace.json` schema v2 con campo `disciplines`.
 - **`catalog-index.md` creado** como índice plano del catálogo (packs + skills con descripciones de una línea). Reemplaza el patrón de `ls + read pack.md/SKILL.md` por una sola lectura. `catalog-author` lo mantiene en `create-skill` y `create-pack`.
 - **Disciplina SDD** agregada al pool (`skills/sdd/`, `discipline: true`, `combinable: true`); 11 skills del ecosistema SDD copiadas al catálogo local (`sdd-flow`, `sdd-init`, `sdd-explore`, `sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive`, `spec-driven-development`). Catálogo autocontenido — no depende de skills externas. Total: 51 skills.
 - **Workspace renombrado de `.my-system/` a `.agents/`** — convención estándar OpenCode. Workspaces generados ahora cross-compatibles Claude Code ↔ OpenCode.
-- **Env var `MY_SYSTEM_HOME` eliminada.** `<global>` = `<base_dir>` siempre (catálogo embebido en `app-init/`). `SKILL.md` simplificado: una línea, sin Bash, sin fallbacks.
+- **Env var `MY_SYSTEM_HOME` eliminada.** `<global>` = `<base_dir>` siempre (catálogo embebido en `kits-init/`). `SKILL.md` simplificado: una línea, sin Bash, sin fallbacks.
 - **Detección de runtime** (Fase 1.1 de `agent.md`): vía env vars (`CLAUDECODE`, `OPENCODE`); resultado persistido en `workspace.json → runtime`. Mapeo de tool de preguntas: `claude-code → AskUserQuestion`, `opencode → question`, `unknown → chat plano numerado`. Cascada aplicada a `meta/catalog-author.md` (regla), `PROJECT-CONTEXT.md` (glosario), `workflows/context-building.md` e `skills/information-architecture/SKILL.md`.
-- **Repo Git inicializado** en `app-init/` con `.gitignore` excluyendo `tests/sandbox*/`. Convención de commits: separar por tema, no agrupar.
+- **Repo Git inicializado** en `kits-init/` con `.gitignore` excluyendo `tests/sandbox*/`. Convención de commits: separar por tema, no agrupar.
 
 ## 10. Trabajo pendiente
 
-- [ ] **Verificación end-to-end** del flujo `/app-init` en sandbox nuevo: confirmar detección de runtime, instalación de packs/skills, generación de `workspace.json` con campo `runtime`, y omisión de Fase 4bis cuando no hay packs de implementación.
+- [ ] **Verificación end-to-end** del flujo `/kits-init` en sandbox nuevo: confirmar detección de runtime, instalación de packs/skills, generación de `workspace.json` con campo `runtime`, y omisión de Fase 4bis cuando no hay packs de implementación.
 - [ ] **README del repo** (entry-point delgado que linkee a `PROJECT-CONTEXT.md` para deep dive). Baja prioridad.
 - [ ] **Tools skills** (`git-commit`, `branch-pr`, `gh-cli`, `environment-setup`,
   `docker-expert`, `taskfile-setup`, y transversales): podrían recibir `consumes:` /
@@ -467,9 +467,9 @@ Ver §4.8 para las decisiones de diseño del rediseño skill → agente.
 | **Artefacto** | Archivo de output, identificado por frontmatter `artifact:`. |
 | **`consumes` / `produces`** | Contrato declarativo de input/output de skills y packs. |
 | **`NN-`** | Placeholder de prefijo numérico; lo resuelve el workflow. |
-| **Pool global** | `app-init/skills/` — todas las skills, plano, compartido. |
-| **`.agents/`** | Workspace que `app-init` genera en cada proyecto. |
-| **`app-init`** | Agente de inicialización — punto de entrada del sistema. `SKILL.md` (thin launcher) + `agent.md` (el agente). Ver §8. |
+| **Pool global** | `kits-init/skills/` — todas las skills, plano, compartido. |
+| **`.agents/`** | Workspace que `kits-init` genera en cada proyecto. |
+| **`kits-init`** | Agente de inicialización — punto de entrada del sistema. `SKILL.md` (thin launcher) + `agent.md` (el agente). Ver §8. |
 | **Skill de disciplina** | Skill con `discipline: true` que rige *cómo* se desarrolla (tdd, bdd, contract-first, trunk-based); no produce documento-artefacto. |
 | **`disciplines`** | Campo de `workspace.json` (schema v2); ids de las disciplinas activas del proyecto. |
 | **`runtime`** | Campo de `workspace.json` que registra el entorno detectado (`claude-code` / `opencode` / `unknown`). Cada agente/workflow que pregunte al usuario lo lee y mapea a la tool nativa: `claude-code → AskUserQuestion`, `opencode → question`, `unknown → chat plano numerado`. |

@@ -68,7 +68,7 @@ la invoca **solo si está activa**.
 | `trunk-based` | `trunk-based` | Pasos 6–7 (commit, pr) — gobierna la cadencia de integración |
 
 > **Si `workspace.json` no tiene el campo `disciplines`** (proyecto inicializado con una
-> versión previa de `app-init`): preguntá al usuario qué disciplinas quiere aplicar y, si
+> versión previa de `kits-init`): preguntá al usuario qué disciplinas quiere aplicar y, si
 > lo confirma, persistí su elección en `workspace.json`.
 
 ## Pasos

@@ -95,5 +95,5 @@ Pack de capacidades para proyectos backend. Al instalarse, distribuye sus skills
 
 ## Stack detectado automáticamente
 
-Si `/app-init` detecta cualquiera de los siguientes, este pack se recomienda automáticamente:
+Si `/kits-init` detecta cualquiera de los siguientes, este pack se recomienda automáticamente:
 `express`, `fastify`, `nestjs`, `django`, `fastapi`, `flask`, `spring`, `rails`, `laravel`, `go`, `rust`, `prisma`, `typeorm`
