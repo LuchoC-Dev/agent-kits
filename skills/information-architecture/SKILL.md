@@ -29,7 +29,7 @@ Existe el documento de discovery aprobado (`docs/design/NN-discovery.md`, o el b
 
 ### Pregunta 1 — Modelo de navegación
 
-Usá `AskUserQuestion` o equivalente:
+Usá la tool de preguntas estructuradas del runtime (lee `.agents/workspace.json → runtime`: `claude-code → AskUserQuestion`, `opencode → question`, `unknown → chat plano numerado`):
 
 > "¿Qué modelo de navegación preferís?"
 >
