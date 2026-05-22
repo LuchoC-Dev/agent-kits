@@ -50,7 +50,8 @@ proyecto actual. No actuás proactivamente en ningún otro contexto.
    - `Cargo.toml`, `go.mod`, `composer.json`, etc.
 3. Detectá si el directorio está **vacío** (sin archivos relevantes salvo `.git`,
    `README`, dotfiles).
-4. **Catálogo global:** leé `<global>/catalog-index.md` con Read — ese archivo tiene
+4. **Catálogo global (`<global>`):** el launcher ya lo resolvió — es el directorio base
+   de la skill app-init. Leé `<global>/catalog-index.md` con Read; ese archivo tiene
    todos los packs y skills con sus descripciones. **No hagas `ls` ni leas `pack.md` ni
    `SKILL.md` individuales.** Si el archivo no existe, marcá `catalog_empty = true`.
 5. **Registrá las señales de disciplinas** para la Fase 4bis (no preguntes todavía):

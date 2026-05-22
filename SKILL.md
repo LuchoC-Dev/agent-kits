@@ -19,22 +19,10 @@ AI-first en el proyecto actual. **No actúes proactivamente** en ningún otro co
 
 ## Qué hacer
 
-1. **PRIMER PASO OBLIGATORIO — resolvé `<global>` ahora, antes de cualquier otra cosa.**
-
-   `<base_dir>` es el directorio base de esta skill — aparece al comienzo del contexto
-   como `Base directory for this skill: <ruta>`. Ya lo tenés; no ejecutes nada para
-   obtenerlo.
-
-   Con `<base_dir>` en mano, resolvé `<global>` en este orden:
-
-   a. Ejecutá con Bash: `echo "$MY_SYSTEM_HOME"`
-      - Si retorna una ruta no vacía → `<global>` = ese valor.
-   b. Si retornó vacío → verificá si `<base_dir>/packs/` existe con Bash:
-      `ls "<base_dir>/packs"` (usá comillas — la ruta puede tener espacios).
-      - Si existe → `<global>` = `<base_dir>`.
-   c. Si ninguno funcionó → `<global>` = `~/.agents/`.
-
-   **No uses `$env:MY_SYSTEM_HOME` ni PowerShell — solo Bash.**
+1. **Resolvé `<global>`** — es el directorio base de esta skill. Aparece al comienzo del
+   contexto como `Base directory for this skill: <ruta>`. Ya lo tenés; no ejecutes nada
+   para obtenerlo. **`<global>` = `<base_dir>`.** El catálogo (`packs/`, `skills/`,
+   `agents/`, `catalog-index.md`) vive ahí mismo.
 
 2. Leé el archivo `agent.md` en la ruta exacta `<base_dir>/agent.md`.
 
@@ -42,9 +30,7 @@ AI-first en el proyecto actual. **No actúes proactivamente** en ningún otro co
    sesión.** Conducís al usuario con preguntas y creás `.agents/` en el cwd.
    Contexto disponible:
    - El **cwd** — directorio del proyecto a inicializar.
-   - `<global>` — ya resuelta en el paso 1. **No la vuelvas a resolver.** Usá ese valor
-     cada vez que `agent.md` diga `<global>`. El agente NO debe ejecutar
-     `echo "$MY_SYSTEM_HOME"` ni ningún comando de env var de nuevo.
+   - `<global>` = `<base_dir>` resuelto en el paso 1.
 
 ## No hacer
 

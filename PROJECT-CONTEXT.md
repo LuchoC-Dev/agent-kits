@@ -41,9 +41,10 @@ Directorio raíz del sistema:
 ```
 
 > Nota: durante el testing local todo se movió bajo `.claude/skills/app-init/` para que
-> Claude Code lo auto-descubra. La variable de entorno `MY_SYSTEM_HOME` (en
-> `.claude/settings.local.json`) apunta acá. Claude Code auto-descubre `SKILL.md` solo
-> un nivel de profundidad.
+> Claude Code lo auto-descubra. El catálogo (`packs/`, `skills/`, `agents/`,
+> `catalog-index.md`) vive como hermano de `SKILL.md` dentro de la misma carpeta de la
+> skill — por eso `<global>` = `<base_dir>` y no hace falta env var. Claude Code
+> auto-descubre `SKILL.md` solo un nivel de profundidad.
 
 ### Árbol actual
 
