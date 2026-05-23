@@ -95,4 +95,3 @@ Contiene toda la información necesaria para presentar opciones al usuario.
 | sdd-apply | Implementa las tareas siguiendo specs y design. |
 | sdd-verify | Valida que la implementación cumple specs, design y tasks. |
 | sdd-archive | Sincroniza delta specs a specs principales y archiva el cambio. |
-| spec-driven-development | Versión genérica/intro a SDD para proyectos sin contexto previo. |
