@@ -68,9 +68,13 @@ de "pregunta estructurada"; el runtime decide la tool real.
    El valor se guarda en `workspace.json → runtime` al cierre. Determina qué mecanismo
    de preguntas usar más adelante: `claude-code` usa `AskUserQuestion`; el resto cae a
    preguntas en chat plano (numeradas, una respuesta por línea).
-2. Verificá si existe `.agents/` en el cwd.
-   - **Existe** → saltá a *Fase 6 (Workspace existente)*.
-   - **No existe** → continuá.
+2. Verificá si existe `.agents/workspace.json` en el cwd (no alcanza con que exista el
+   folder `.agents/` — puede haber sido creado por otra herramienta como `npx skills` para
+   instalar la fuente de la propia kits-init).
+   - **`.agents/workspace.json` existe** → saltá a *Fase 6 (Workspace existente)*.
+   - **No existe** (haya o no haya folder `.agents/`) → continuá. Si el folder existe pero
+     no tiene `workspace.json`, lo respetás: vas a crear `workspace.json` y demás
+     subcarpetas junto a lo que ya está, sin tocar nada existente.
 3. Detectá el stack leyendo, en este orden, lo que esté disponible:
    - `package.json` → `dependencies` / `devDependencies` (React, Vue, Next, Vite,
      Express, etc.).
@@ -97,7 +101,7 @@ de "pregunta estructurada"; el runtime decide la tool real.
 |---|---|
 | Vacío + sin stack | *Escenario A — Greenfield* (Fase 3) |
 | Stack detectado | *Escenario B — Proyecto existente* (Fase 3) |
-| `.agents/` ya existe | *Escenario C — Repair/Upgrade* (Fase 6) |
+| `.agents/workspace.json` ya existe | *Escenario C — Repair/Upgrade* (Fase 6) |
 
 ## Fase 3 — Elección de composición
 
