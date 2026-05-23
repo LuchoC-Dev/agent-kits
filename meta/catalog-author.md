@@ -64,7 +64,7 @@ Lo no obvio. Esto no se ve leyendo un ejemplo, así que lo aplicás siempre:
 - **Preguntas runtime-aware.** Si la skill, workflow o agente que estás creando hace
   preguntas estructuradas al usuario, **nunca** hardcodees el nombre `AskUserQuestion`.
   Referite al concepto genérico ("preguntá con la tool de preguntas estructuradas del
-  runtime") y remitite a la sección *Mecanismo de preguntas* de `agent.md`. El runtime
+  runtime") y remitite a la sección *Mecanismo de preguntas* de `SKILL.md`. El runtime
   se lee de `.agents/workspace.json → runtime` y mapea a:
   `claude-code → AskUserQuestion`, `opencode → question`, `unknown → chat plano numerado`.
   Esto garantiza que los artefactos generados funcionen en cualquier runtime soportado.

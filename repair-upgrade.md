@@ -1,6 +1,6 @@
 # Fase 6 — Workspace existente (Repair / Upgrade / Install / Reindex)
 
-Leé este archivo **solo si llegaste a Fase 6** desde `agent.md` — es decir, si
+Leé este archivo **solo si llegaste a Fase 6** desde `SKILL.md` — es decir, si
 `.agents/workspace.json` ya existe al arrancar `/kits-init`. No es parte del contexto
 cargado por defecto.
 

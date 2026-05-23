@@ -50,9 +50,11 @@ Directorio raíz del sistema:
 
 ```
 kits-init/
-├── SKILL.md                  ← thin launcher: trigger /kits-init, lanza el agente
-├── agent.md                  ← el agente kits-init (todo el flujo de inicialización)
+├── SKILL.md                  ← skill `kits-init`: trigger + identidad + flujo completo
 ├── PROJECT-CONTEXT.md        ← este archivo
+├── workspace-schema.md       ← schema de workspace.json (cargado on-demand)
+├── repair-upgrade.md         ← flujo de Fase 6 (cargado on-demand)
+├── catalog-index.md          ← índice plano del catálogo (1 read, evita ls + N reads)
 ├── skills/                   ← POOL GLOBAL de skills (35 skills, plano)
 │   ├── <skill-id>/SKILL.md
 │   └── ...
@@ -289,10 +291,10 @@ Decisiones de diseño tomadas:
 
 - **Taxonomía: caso único raíz.** `kits-init` no es Clase 1, ni Clase 2, ni Meta — es el
   **punto de entrada del sistema**. No se abrió una categoría nueva: es un agente especial
-  que vive en la raíz `kits-init/` como `agent.md`.
-- **Invocación: thin launcher.** El `SKILL.md` se reescribió como un **lanzador delgado**:
-  conserva el trigger `/kits-init` y "cuándo actuar", y su única acción es lanzar el agente
-  `kits-init` (`agent.md`) en contexto propio. Todo el flujo real vive en el agente.
+  que vive en la raíz `kits-init/SKILL.md`.
+- **Invocación: un solo archivo.** Tanto el trigger como el flujo completo viven en
+  `SKILL.md`. Sin indirección, sin `agent.md` separado. Se carga una vez al disparar la
+  skill y queda con todo el contexto necesario para conducir el flujo.
 - **Flujo enriquecido + disciplinas.** El agente agrega la **Fase 4bis — Disciplinas de
   desarrollo**: detecta señales del stack (`.feature`→bdd, `openapi.*`→contract-first,
   config de tests→tdd) y **propone**; el usuario confirma o ajusta con la tool de
@@ -398,13 +400,16 @@ Reglas que sigue **toda** skill ya limpiada:
 
 ## 8. El agente `kits-init` (bootstrap)
 
-`kits-init` es el **agente de inicialización** del sistema — el punto de entrada. Se
-compone de dos archivos en la raíz `kits-init/`:
+`kits-init` es el **agente de inicialización** del sistema — el punto de entrada. Es
+**un solo archivo**: `kits-init/SKILL.md`. Contiene el frontmatter de trigger
+(`/kits-init`), la identidad, los principios, el mecanismo de preguntas runtime-aware,
+y todo el flujo de inicialización (6 fases + Fase 4bis de disciplinas + Fase 4.5 de
+skills extras).
 
-- **`SKILL.md`** — *thin launcher*. Conserva el trigger `/kits-init` y "cuándo actuar". Su
-  única acción es **lanzar el agente** en contexto propio. No contiene procedimiento.
-- **`agent.md`** — el **agente** propiamente dicho: identidad, principios y todo el flujo
-  de inicialización (6 fases + Fase 4bis de disciplinas).
+Tres archivos satélite se cargan **on-demand** (no por defecto):
+- `workspace-schema.md` — schema de `workspace.json` (al escribir el JSON).
+- `repair-upgrade.md` — flujo de Fase 6 (si `.agents/workspace.json` ya existe).
+- `catalog-index.md` — índice plano del catálogo (1 read en Fase 1 paso 5).
 
 Su responsabilidad es **inicializar `.agents/`** en el directorio actual de forma
 conversacional y guiada: detecta el stack, descubre packs y skills del sistema global,
@@ -438,12 +443,12 @@ Ver §4.8 para las decisiones de diseño del rediseño skill → agente.
 - **Numeración `NN` unificada** en los 4 workflows: frontmatter usa `NN-*.md`; tablas de modos son la única fuente de verdad de los números; columnas `NN` explícitas en `backend-design` y `context-building`.
 - **Skills de disciplina de desarrollo** creadas en el pool global: `tdd`, `bdd`, `contract-first`, `trunk-based` (`discipline: true`, `combinable: true`). Ver §4.7.
 - **Workflows `feature-development`** de `backend` y `frontend` modificados: paso 0 `disciplines-check` que lee `workspace.json`; tabla de puntos de enganche; invocación condicional de cada disciplina activa; paso `behavior-spec` condicional a `bdd`.
-- **`kits-init` rediseñado de skill a agente** (ver §4.8): `SKILL.md` reescrito como thin launcher; `agent.md` nuevo con identidad, principios y el flujo completo; Fase 4bis de disciplinas (detección + confirmación); `workspace.json` schema v2 con campo `disciplines`.
+- **`kits-init` rediseñado de skill a agente** (ver §4.8): pasó de skill-orquestador a agente embebido en `SKILL.md` (un solo archivo con trigger + identidad + flujo completo + Fase 4bis de disciplinas); `workspace.json` schema v2 con campo `disciplines`.
 - **`catalog-index.md` creado** como índice plano del catálogo (packs + skills con descripciones de una línea). Reemplaza el patrón de `ls + read pack.md/SKILL.md` por una sola lectura. `catalog-author` lo mantiene en `create-skill` y `create-pack`.
 - **Disciplina SDD** agregada al pool (`skills/sdd/`, `discipline: true`, `combinable: true`); 10 skills del ecosistema SDD en el catálogo local (`sdd-flow`, `sdd-init`, `sdd-explore`, `sdd-propose`, `sdd-spec`, `sdd-design`, `sdd-tasks`, `sdd-apply`, `sdd-verify`, `sdd-archive`). Catálogo autocontenido — no depende de skills externas. Total: 50 skills.
 - **Workspace renombrado de `.my-system/` a `.agents/`** — convención estándar OpenCode. Workspaces generados ahora cross-compatibles Claude Code ↔ OpenCode.
 - **Env var `MY_SYSTEM_HOME` eliminada.** `<global>` = `<base_dir>` siempre (catálogo embebido en `kits-init/`). `SKILL.md` simplificado: una línea, sin Bash, sin fallbacks.
-- **Detección de runtime** (Fase 1.1 de `agent.md`): vía env vars (`CLAUDECODE`, `OPENCODE`); resultado persistido en `workspace.json → runtime`. Mapeo de tool de preguntas: `claude-code → AskUserQuestion`, `opencode → question`, `unknown → chat plano numerado`. Cascada aplicada a `meta/catalog-author.md` (regla), `PROJECT-CONTEXT.md` (glosario), `workflows/context-building.md` e `skills/information-architecture/SKILL.md`.
+- **Detección de runtime** (Fase 1.1 de `SKILL.md`): vía env vars (`CLAUDECODE`, `OPENCODE`); resultado persistido en `workspace.json → runtime`. Mapeo de tool de preguntas: `claude-code → AskUserQuestion`, `opencode → question`, `unknown → chat plano numerado`. Cascada aplicada a `meta/catalog-author.md` (regla), `PROJECT-CONTEXT.md` (glosario), `workflows/context-building.md` e `skills/information-architecture/SKILL.md`.
 - **Repo Git inicializado** en `kits-init/` con `.gitignore` excluyendo `tests/sandbox*/`. Convención de commits: separar por tema, no agrupar.
 
 ## 10. Trabajo pendiente
@@ -469,7 +474,7 @@ Ver §4.8 para las decisiones de diseño del rediseño skill → agente.
 | **`NN-`** | Placeholder de prefijo numérico; lo resuelve el workflow. |
 | **Pool global** | `kits-init/skills/` — todas las skills, plano, compartido. |
 | **`.agents/`** | Workspace que `kits-init` genera en cada proyecto. |
-| **`kits-init`** | Agente de inicialización — punto de entrada del sistema. `SKILL.md` (thin launcher) + `agent.md` (el agente). Ver §8. |
+| **`kits-init`** | Agente de inicialización — punto de entrada del sistema. Un solo `SKILL.md` (trigger + flujo completo) + 3 archivos satélite cargados on-demand (`workspace-schema.md`, `repair-upgrade.md`, `catalog-index.md`). Ver §8. |
 | **Skill de disciplina** | Skill con `discipline: true` que rige *cómo* se desarrolla (tdd, bdd, contract-first, trunk-based); no produce documento-artefacto. |
 | **`disciplines`** | Campo de `workspace.json` (schema v2); ids de las disciplinas activas del proyecto. |
 | **`runtime`** | Campo de `workspace.json` que registra el entorno detectado (`claude-code` / `opencode` / `unknown`). Cada agente/workflow que pregunte al usuario lo lee y mapea a la tool nativa: `claude-code → AskUserQuestion`, `opencode → question`, `unknown → chat plano numerado`. |
