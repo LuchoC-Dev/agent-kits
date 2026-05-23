@@ -205,16 +205,9 @@ carpeta separada — `disciplines[]` es la fuente de verdad de cuáles están ac
 
 ## Fase 6 — Workspace existente
 
-Mostrá `AskUserQuestion` con opciones derivadas del estado actual:
-
-- **Repair** — recrea carpetas faltantes sin tocar contenido existente.
-- **Upgrade** — actualiza el schema de `workspace.json` si cambió la versión. Al subir
-  de schema v1 a v2, agregá el campo `disciplines: []` si no existe (y ofrecé correr la
-  *Fase 4bis* para poblarlo).
-- **Install packs** — agrega un pack nuevo encima del workspace actual.
-- **Reindex** — regenera índices de skills/agentes (placeholder por ahora).
-
-**Nunca** borres contenido del usuario. Si hay conflicto, preguntá.
+Si llegaste acá, leé `<global>/repair-upgrade.md` ahora — tiene el flujo completo de
+Repair / Upgrade / Install packs / Reindex. **No** sigas con la lógica de Fase 4 ni
+sobrescribas nada del workspace existente.
 
 # Estructura generada
 
@@ -235,55 +228,11 @@ Las carpetas se crean **solo cuando hay contenido real para ellas**:
 Si el usuario no instala ningún pack ni skill (custom-empty), el resultado final es solo
 `.agents/workspace.json`. Sin carpetas vacías.
 
-# Schema de `workspace.json` (v2)
+# Schema de `workspace.json`
 
-```json
-{
-  "$schema_version": 2,
-  "id": "<generá un UUID v4 directamente como texto, formato xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx — sin scripts>",
-  "created_at": "<ISO 8601>",
-  "updated_at": "<ISO 8601>",
-  "system_version": "0.1.0",
-  "runtime": "claude-code | opencode | unknown",
-  "pack": {
-    "name": "<pack-id o 'custom' o 'custom-empty'>",
-    "source": "<ruta al pack en global, o null si custom>",
-    "installed_at": "<ISO 8601>"
-  },
-  "stack": {
-    "detected": ["react", "typescript", "vite"],
-    "source": "package.json | user-input | none",
-    "confidence": "high | medium | low"
-  },
-  "skills": [
-    { "id": "<skill-id>", "source": "<ruta global>", "installed_at": "<ISO>" }
-  ],
-  "agents": [
-    { "id": "<agent-id>", "class": 1, "source": "<ruta global>", "installed_at": "<ISO>" },
-    { "id": "<agent-id>", "class": 2, "source": "<ruta global>", "installed_at": "<ISO>" }
-  ],
-  "disciplines": ["tdd", "bdd"],
-  "flags": {
-    "initialized": true,
-    "repaired_at": null,
-    "upgraded_at": null
-  },
-  "structure": ["agents", "skills", "workflows"]
-}
-```
-
-> **`runtime`** — entorno donde se inicializó el workspace. Detectado en Fase 1 paso 1
-> vía env vars (`CLAUDECODE`, `OPENCODE`). Lo usan agentes y workflows para elegir
-> mecanismos: `claude-code` habilita `AskUserQuestion`, `ScheduleWakeup`, `TaskCreate`;
-> `opencode` y `unknown` deben caer a alternativas en chat plano.
->
-> **`disciplines`** — array de ids de skills de disciplina activas en el proyecto. Lo
-> leen los workflows de implementación (`feature-development`) para invocar
-> condicionalmente cada disciplina. Vacío `[]` si el proyecto no usa ninguna. Es la
-> **única fuente de verdad** de qué disciplinas están activas.
->
-> **Cambios de v1 → v2:** se agregó el campo `disciplines`. Un workspace v1 sin el campo
-> se trata como `disciplines: []`.
+Cuando vayas a **escribir** `workspace.json` (Fase 4, 4.5 o Upgrade), leé
+`<global>/workspace-schema.md`. Tiene el schema completo (v2) y las notas por campo.
+No lo cargues antes — solo cuando estés a punto de escribir el JSON.
 
 # Output al usuario — reglas de formato
 
