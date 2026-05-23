@@ -247,22 +247,14 @@ sacrificar claridad.
 - Sin anuncios de progreso intermedios ("ahora voy a…", "Bash completado"). Solo
   resultados.
 
-## Anuncio inicial (después de Fase 1)
+## Anuncio inicial (post-Fase 1)
 
-Una línea. Ejemplos:
-```
-Runtime: claude-code. Directorio vacío (greenfield).
-```
-```
-Runtime: claude-code. Stack detectado: react, typescript, vite.
-```
-```
-Runtime: claude-code. .agents/workspace.json existe → Repair/Upgrade.
-```
+Una línea: `Runtime: <runtime>. <estado>`. Ejemplo: `Runtime: claude-code. Stack: react, typescript`.
 
-## Plan antes de instalar (Fase 4)
+## Plan antes de instalar
 
-Formato compacto. Una línea-resumen y luego una tabla mínima de 4-5 filas. Ejemplo:
+Línea-resumen con counts + tabla compacta + `¿Confirmás?` (vía tool del runtime).
+Skills agrupadas por pack, **nunca enumeradas una por una**.
 
 ```
 Plan: 3 packs · 31 skills · 6 agentes · 2 workflows · 0 disciplinas
@@ -270,58 +262,35 @@ Plan: 3 packs · 31 skills · 6 agentes · 2 workflows · 0 disciplinas
   packs       context, fullstack-design, tools
   skills      6 context + 19 fullstack-design + 6 tools
   agentes     C1: context-builder, fullstack-designer
-              C2: cross-track-auditor, artifact-validator, design-critic, research-scout
+              C2: artifact-validator, design-critic, research-scout, cross-track-auditor
   workflows   context-building, fullstack-design
-
-¿Confirmás?
 ```
-
-No enumerar las skills individuales en el plan — los counts agrupados por pack alcanzan.
-La confirmación va por la tool de preguntas estructuradas del runtime, no por chat libre.
 
 ## Cierre
 
-Una línea de resumen + árbol + próximos pasos. Ejemplo:
+Línea-resumen + árbol + máx 3 próximos pasos.
 
 ```
 ✓ Workspace listo · 32 skills · 6 agentes · 2 workflows · disciplinas: contract-first
 
 .agents/
 ├── workspace.json
-├── packs/
-│   ├── context/pack.md
-│   ├── fullstack-design/pack.md
-│   └── tools/pack.md
-├── skills/          (32 skills)
-├── agents/          (6 agentes)
-└── workflows/
-    ├── context-building.md
-    └── fullstack-design.md
+├── packs/{context,fullstack-design,tools}/pack.md
+├── skills/     (32)
+├── agents/     (6)
+└── workflows/{context-building,fullstack-design}.md
 
 Próximos pasos:
   1. /context-building → articular problema y dominio
-  2. /fullstack-design → diseño técnico (consume docs/context/)
+  2. /fullstack-design → diseño técnico
   3. Skills de tools disponibles cuando implementes
 ```
 
-Reglas del árbol:
-- Mostrar todos los `pack.md` (uno por pack instalado).
-- Mostrar todos los workflows (suelen ser 1-3).
-- **No** enumerar skills/agentes individuales dentro de sus carpetas — usar el count
-  entre paréntesis.
-- Si una carpeta está vacía (no se instaló nada de ese tipo), omitirla del árbol.
-
-Reglas de "Próximos pasos":
-- Máximo 3 bullets, una línea cada uno.
-- Formato: `nombre → acción concisa`.
-- Sin explicar qué hace cada workflow — el nombre ya lo dice.
-- Solo agregar una nota extra si hay algo no-obvio que el usuario debe saber (ej.
-  "stack se completará con tech-decisions" si quedó vacío).
-
-## Disciplinas en el cierre
-
-Si hay disciplinas activas, incluirlas en la línea de resumen como `disciplinas: a, b, c`.
-**No** agregar descripción de cada disciplina — quien la activó ya sabe qué es.
+Reglas del árbol: usar brace expansion para listar varios archivos en una línea; mostrar
+count `(N)` entre paréntesis en vez de enumerar skills/agentes; omitir carpetas vacías.
+Disciplinas activas van en la línea-resumen como `disciplinas: a, b, c` (sin descripción).
+Próximos pasos: máx 3 bullets, formato `nombre → acción`. Solo agregar nota extra si hay
+algo no-obvio (ej. stack a completar).
 
 # No hacer
 
