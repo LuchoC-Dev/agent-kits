@@ -69,17 +69,6 @@ La detección es automática en Fase 1 del agente.
 └── packs/<id>/pack.md      ← registro de los packs instalados
 ```
 
-## Build (para contribuidores)
-
-`build.sh` genera `dist/kits-init/` con solo los archivos distribuibles (sin `tests/`, `meta/`, etc.).
-
-```bash
-./build.sh           # genera dist/kits-init/
-./build.sh --zip     # + dist/kits-init.zip
-./build.sh --tar     # + dist/kits-init.tar.gz
-./build.sh --clean   # borra dist/
-```
-
 ## Documentación interna
 
 Para entender la arquitectura, las decisiones de diseño y el glosario completo, ver [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md).
