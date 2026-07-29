@@ -1,5 +1,21 @@
 # agent-kits
 
+> [!IMPORTANT]
+> Este working tree corresponde al fork **Agent Kits Next**, que añade una CLI en Go para
+> descubrir, planificar e instalar recursos desde sources Git — ver
+> [`docs/cli.md`](./docs/cli.md).
+>
+> El catálogo y la skill `kits-init` que documenta este README **siguen funcionando sin
+> cambios**: la CLI los consume mediante un adaptador y comparte con ellos el layout
+> `.agents/` y el esquema de `workspace.json`.
+>
+> Para el alcance y las decisiones vigentes, empieza por
+> [`docs/context/README.md`](./docs/context/README.md). Los agentes deben leer además
+> [`AGENTS.md`](./AGENTS.md) antes de modificar el repositorio.
+>
+> Nota: el conteo de "51 skills" de este README está desactualizado — son 50
+> ([auditoría](./docs/context/06-legacy-baseline.md)).
+
 **AI-first workspace bootstrapper.** Inicializa un workspace `.agents/` en cualquier proyecto con un catálogo curado de skills, packs, agentes y disciplinas de desarrollo. Cross-compatible **Claude Code** ↔ **OpenCode**.
 
 ## Instalación
