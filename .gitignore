@@ -1,1 +1,9 @@
 tests/sandbox*/
+
+# Compiled CLI binaries
+/agent-kits
+/agent-kits.exe
+
+# Go build and test artefacts
+*.test
+coverage.out
