@@ -119,10 +119,42 @@ forma parte de la API ni de la marca de Agent Kits.
 
 ## D-014 — Mantener upstream sin push
 
-**Estado:** Accepted
+**Estado:** Superseded por D-040
 
 El remoto `upstream` del fork local tiene `pushurl=DISABLED`. Un `origin` colaborativo se
 añadirá solo después de acordar propietario y nombre.
+
+## D-040 — `LuchoC-Dev/agent-kits` pasa a ser el repositorio de la CLI
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+**Reemplaza:** D-014
+**Completa:** D-037
+
+El trabajo deja de vivir sólo en local: `LuchoC-Dev/agent-kits` recibe la CLI y se
+convierte en el repositorio de la herramienta. El remoto se llama `origin` y admite push.
+
+**Razón:** el fork sin push existía para evolucionar mientras no estaba claro en qué
+terminaría el rediseño (D-001). Eso se cerró: la CLI es el producto, y el nombre del
+repositorio es el nombre del producto. Mantenerlo congelado obligaría a publicar la
+herramienta con otro nombre y a que su propio repositorio siguiera ofreciendo la skill que
+D-029 deprecó.
+
+**Consecuencias:**
+
+- el catálogo desaparece de la rama por defecto de ese repositorio, porque se mudó a
+  `repository-private` (D-037);
+- `SKILL.md`, `repair-upgrade.md` y `workspace-schema.md` desaparecen con él, como ya
+  había decidido D-029;
+- ambos siguen en el historial de Git, que es donde corresponde que esté la historia;
+- la CI del catálogo puede por fin construir la CLI, que es lo que la mantenía en rojo.
+
+**No cambia** la prohibición que importa: la CLI sigue sin poder escribir en un remoto
+(D-004). Lo que se publica acá es el código de la herramienta, con Git, por una persona.
+
+**Deuda que esta decisión no salda:** los 75 recursos del catálogo estuvieron públicos en
+este repositorio y siguen en su historial. El invariante "nada nace público" (D-038) rige
+hacia adelante; el contenido ya expuesto requiere una decisión aparte.
 
 ## D-015 — Especificar antes de implementar
 

@@ -1,16 +1,14 @@
 # Agent Kits Next — guía para agentes
 
-Este repositorio es un **fork de trabajo** de `LuchoC-Dev/agent-kits`. Su propósito es
-evolucionar Agent Kits sin modificar directamente el proyecto original.
+Este repositorio **es** `LuchoC-Dev/agent-kits`: la CLI de Agent Kits (D-040). El catálogo
+vive aparte, en `repository-private` y su espejo `repository` (D-037).
 
 ## Estado actual
 
-- Fase: **transición a CLI única completada** salvo la verificación de una source privada
-  real (`docs/context/07-cli-only-transition-plan.md`, T19).
+- Fase: **transición a CLI única completada**, incluida la verificación de la source
+  privada real (`docs/context/07-cli-only-transition-plan.md`).
 - Rama de trabajo: `main`.
-- `upstream`: repositorio original, configurado sin push.
-- `origin`: la topología quedó fijada en D-037. El catálogo vive en dos repositorios
-  propios; este conserva sólo `upstream`, sin push.
+- `origin`: `LuchoC-Dev/agent-kits`, con push habilitado desde D-040.
 - Stack: **Go, solo librería estándar** (D-016). `go.mod` no declara `require`.
 - **La CLI es la única superficie.** `kits-init`, `workspace.json` y el adaptador del
   catálogo heredado fueron retirados (D-029, D-030, D-034). El estado de un proyecto vive
@@ -83,7 +81,6 @@ workflow de CI en el repositorio privado del catálogo (D-039).
 
 ### Nunca
 
-- Hagas push a `upstream`.
 - Añadas un comando `publish` a Agent Kits.
 - Añadas un subcomando de Git que escriba a un remoto a la lista blanca de
   `internal/git/git.go`. Esa lista **es** la garantía de "sin escrituras remotas".
@@ -92,7 +89,6 @@ workflow de CI en el repositorio privado del catálogo (D-039).
 - Sobrescribas un archivo divergente sin `--force` explícito del usuario.
 - Mezcles recursos privados dentro del repositorio público.
 - Guardes secretos, tokens o credenciales en manifiestos.
-- Modifiques el repositorio original desde este fork.
 - Presentes decisiones todavía abiertas como contratos definitivos.
 
 ## Convención semántica de nombres
