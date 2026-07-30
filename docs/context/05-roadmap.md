@@ -3,6 +3,15 @@
 **Estado:** Fases 0–7 completadas
 **Fecha:** 2026-07-29
 
+> **Roadmap siguiente:** la transición a CLI única, lockfile v2 y catálogo mínimo fue
+> aprobada el 2026-07-30. Sus fases y gates están en
+> `07-cli-only-transition-plan.md`. Este documento conserva el historial del MVP original.
+>
+> Estado de esa transición al 2026-07-30: fases A–D completadas (contratos, lockfile v2,
+> migración lossless y CLI independiente de `workspace.json`). Las fases E–G están
+> **bloqueadas** hasta que el usuario apruebe la tabla del catálogo mínimo; la Fase G
+> incluye además la verificación pendiente contra una source privada real.
+
 Este roadmap describe puertas de validación.
 
 ## Estado por fase
@@ -17,7 +26,7 @@ Este roadmap describe puertas de validación.
 | 5 — Instalación segura | ✅ | `internal/install`, lockfile, rollback, remove, doctor |
 | 6 — Sources remotas y privacidad | ⚠️ parcial | cache, sync y reglas de visibilidad implementadas; sin probar contra un remoto privado real |
 | 7 — Adaptadores | ✅ | `agents`, `claude-code`, `opencode` (D-021) |
-| 8 — Compatibilidad y adopción | ✅ | `import`, `workspace.json` v2 (D-022) |
+| 8 — Compatibilidad y adopción | ✅ | adopción de workspaces heredados; hoy vía `migrate` (D-031) |
 
 La Fase 8 se adelantó porque la compatibilidad con `kits-init` pasó a ser un requisito, no
 una opción. Lo que resta de la Fase 6 es verificación con credenciales reales, no diseño.

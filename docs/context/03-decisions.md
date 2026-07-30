@@ -206,7 +206,7 @@ layout esté verificado.
 
 ## D-022 — Compatibilidad con `kits-init` es obligatoria
 
-**Estado:** Accepted
+**Estado:** Superseded por D-029, D-030 y D-031
 **Reemplaza la incógnita de:** `04-specification.md §12.9`
 
 La CLI lee y escribe `workspace.json` v2 preservando los campos que no administra, y
@@ -257,7 +257,7 @@ criptográficas en el MVP. Un repositorio público no implica confianza automát
 
 ## D-026 — El catálogo heredado se consume mediante adaptador
 
-**Estado:** Accepted
+**Estado:** Accepted — transición; su retirada está aprobada por D-032
 
 El loader de catálogos detecta el layout heredado (`catalog-index.md` + `skills/` +
 `packs/`) y sintetiza manifests canónicos en memoria. No se reescribe ningún archivo del
@@ -296,6 +296,118 @@ de modo que instalar los dos perdía una de las dos versiones sin avisar. El con
 un defecto del catálogo que hay que corregir en el catálogo, no una ambigüedad que la
 herramienta deba resolver por su cuenta.
 
+## D-029 — La CLI es la única superficie que seguirá evolucionando
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+**Reemplaza:** la obligación futura de compatibilidad bidireccional de D-022
+
+`kits-init` queda deprecado y congelado. No recibirá nuevas funcionalidades ni condicionará
+los contratos futuros. Agent Kits evolucionará exclusivamente como CLI.
+
+Las sources Git permanecen: pertenecen a la arquitectura de obtención de la CLI y no al
+bootstrap conversacional.
+
+**Transición:** el comportamiento heredado puede permanecer temporalmente para permitir
+una migración segura, pero no es una segunda superficie soportada a largo plazo.
+
+## D-030 — El lockfile será la única fuente de verdad del proyecto
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+**Reemplaza parcialmente:** D-018 y D-022
+
+`.agents/agent-kits.lock.json` concentrará todo el estado operativo que Agent Kits necesita.
+`workspace.json` se eliminará después de una migración explícita y sin pérdida.
+
+El cambio requiere un nuevo `schema_version` del lockfile. Ningún comando normal podrá
+eliminar ni ignorar un `workspace.json` pendiente de migración.
+
+## D-031 — La retirada de `workspace.json` usa una migración temporal y reversible
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+
+La CLI incorporará temporalmente:
+
+```text
+agent-kits migrate --project <path> [--yes] [--json]
+```
+
+La migración:
+
+- genera y valida el nuevo lockfile antes de retirar `workspace.json`;
+- preserva los datos operativos en el schema nuevo;
+- conserva los datos históricos o desconocidos dentro del registro de migración;
+- crea `.agents/workspace.json.migrated.bak`;
+- usa el journal existente para aplicar lockfile, backup y retirada como una sola
+  operación recuperable;
+- aborta sin modificar el proyecto si encuentra ambigüedad, divergencia o datos que no
+  puede preservar.
+
+`migrate` y el alias heredado `import` se retirarán en un cambio posterior expresamente
+aprobado. La copia de seguridad pertenece al usuario y no se eliminará automáticamente.
+
+## D-032 — El catálogo objetivo será mínimo y nativo
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+**Reemplaza al completar la transición:** D-026
+
+Los recursos que el usuario decida conservar se describirán mediante manifests nativos
+`agent-kit.json`. Después de migrarlos y verificar el catálogo se eliminarán el loader
+Markdown heredado y el parser de frontmatter si ya no tienen consumidores.
+
+No se elimina ningún recurso hasta que el usuario entregue y apruebe la lista exacta.
+La selección del catálogo es una puerta bloqueante, no una decisión que el implementador
+pueda inferir.
+
+## D-033 — El núcleo conserva los cuatro tipos de recurso
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+
+La reducción del catálogo no reduce el vocabulario del núcleo. `skill`, `agent`,
+`workflow` y `kit` continúan soportados por manifests, resolución, planificación,
+instalación y lockfile aunque el catálogo mínimo tenga pocos recursos de algún tipo.
+
+## D-034 — El catálogo mínimo aprobado es el catálogo completo
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+**Cierra el gate de:** D-032
+
+El usuario aprobó conservar los **75 recursos** existentes: 50 skills, 7 kits, 11 agentes y
+7 workflows. Ninguno se elimina en este cambio.
+
+**Razón:** podar es barato y reversible —borrar directorios y actualizar
+`catalog-index.md`—, mientras que decidir qué se pierde no lo es. Conservar todo permite
+migrar a manifests nativos y retirar el loader heredado ahora, y dejar la selección para
+cuando el uso real la informe.
+
+Consecuencias operativas, decididas junto con la lista:
+
+1. **Versión inicial `1.0.0`** para los 65 recursos que no declaran ninguna. Los 10 que sí
+   la declaran (3 skills y los 7 packs) conservan la suya. El `0.0.0` que sintetizaba el
+   loader heredado desaparece: sin versiones reales, `update` no distingue cambios de
+   contenido dentro de una misma versión (`06-legacy-baseline.md §8`, Hallazgo 4).
+
+2. **Un directorio por recurso.** El loader nativo asocia un `agent-kit.json` a su
+   directorio, así que los 18 recursos que eran un `.md` suelto —4 agentes globales, 7
+   agentes de kit y 7 workflows— pasan a tener carpeta propia. Es un cambio del *layout de
+   la source*, no del destino: el archivo se instala exactamente en la misma ruta que
+   antes, porque el destino se deriva del nombre de archivo declarado, no de su ubicación
+   en el repositorio.
+
+3. **Se renombran los archivos, no los IDs.** Los dos `feature-development` pasan a
+   `backend-feature-development.md` y `frontend-feature-development.md`. Los IDs canónicos
+   `backend/feature-development` y `frontend/feature-development` no cambian: lo que
+   colisionaba era el destino `.agents/workflows/feature-development.md`, no la identidad
+   (D-028, Hallazgo 2).
+
+**No decide** qué recursos sobrevivirán a una poda futura: esa sigue siendo una decisión
+del usuario, ahora sin bloquear la retirada del legado.
+
 ## Decisiones todavía necesarias
 
 - ubicación definitiva del registro global de reserva de IDs para sources remotas
@@ -303,4 +415,5 @@ herramienta deba resolver por su cuenta.
 - rangos de versión compuestos;
 - firma criptográfica de sources;
 - adaptador de Codex;
-- topología del repositorio colaborativo (`origin`).
+- topología del repositorio colaborativo (`origin`);
+- qué recursos podar del catálogo cuando el uso real lo informe (D-034 conservó todos).

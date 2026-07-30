@@ -5,12 +5,16 @@ evolucionar Agent Kits sin modificar directamente el proyecto original.
 
 ## Estado actual
 
-- Fase: **MVP implementado y verificado** (Fases 0–8; la 6 queda parcial).
-- Rama de trabajo: `planning/agent-kits-next`, mergeada a `main`.
+- Fase: **transición a CLI única completada** salvo la verificación de una source privada
+  real (`docs/context/07-cli-only-transition-plan.md`, T19).
+- Rama de trabajo: `main`.
 - `upstream`: repositorio original, configurado sin push.
 - `origin`: todavía no existe; se definirá cuando haya un repositorio colaborativo.
 - Stack: **Go, solo librería estándar** (D-016). `go.mod` no declara `require`.
-- El catálogo heredado **no se modificó**: se consume mediante un adaptador (D-026).
+- **La CLI es la única superficie.** `kits-init`, `workspace.json` y el adaptador del
+  catálogo heredado fueron retirados (D-029, D-030, D-034). El estado de un proyecto vive
+  solo en `.agents/agent-kits.lock.json`.
+- El catálogo es nativo: 75 recursos, un `agent-kit.json` por directorio de recurso.
 
 La CLI vive en `cmd/agent-kits` e `internal/`. Su referencia es `docs/cli.md`.
 

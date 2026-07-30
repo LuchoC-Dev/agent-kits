@@ -1,10 +1,20 @@
 # Contexto del Proyecto — Sistema AI-First de Workspaces
 
-> **Propósito de este archivo:** dar a cualquier sesión (humana o agente) el contexto
-> completo del proyecto, sus decisiones de diseño y el camino recorrido, sin necesidad
-> de leer todo el código. Si entrás nuevo: leé esto primero.
+> [!IMPORTANT]
+> **Documento histórico.** Describe el sistema `kits-init`: la skill conversacional que
+> precedió a la CLI. Esa superficie fue deprecada (D-029) y retirada el 2026-07-30, junto
+> con `workspace.json` (D-030) y el adaptador del catálogo heredado (D-034).
 >
-> Última actualización del documento: 2026-05-22.
+> Se conserva porque explica **por qué** el sistema es como es, y esa razón sigue siendo
+> válida. Pero ya no describe el comportamiento actual: para eso están
+> [`docs/cli.md`](./docs/cli.md) y [`docs/context/`](./docs/context/README.md).
+>
+> Lo que sigue vigente de este documento: el catálogo, el layout `.agents/`, la taxonomía
+> de recursos y la separación entre distribuir y crear. Lo que ya no: `workspace.json`,
+> el flujo conversacional, `/kits-init` y las rutas del catálogo, que ahora usan un
+> directorio por recurso.
+>
+> Última actualización del contenido original: 2026-05-22.
 
 ---
 

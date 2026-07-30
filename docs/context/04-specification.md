@@ -3,6 +3,16 @@
 **Estado:** Draft — requiere revisión humana
 **Fecha:** 2026-07-29
 
+> **Transición en curso (actualizado el 2026-07-30):** esta especificación describe el MVP
+> original. D-029 a D-033 reemplazan la evolución de `kits-init`, `workspace.json` y el
+> catálogo heredado; la especificación delta y el plan viven en
+> `07-cli-only-transition-plan.md`.
+>
+> Las fases A–D de ese plan (lockfile v2, `migrate`, `import` deprecado y CLI independiente
+> de `workspace.json`) **ya están implementadas**. Las fases E–G siguen bloqueadas por el
+> gate humano del catálogo mínimo. `docs/cli.md` describe el comportamiento real vigente y
+> tiene precedencia sobre §3 y §12 de este documento cuando difieran.
+
 ## 1. Objetivo
 
 Construir una CLI y núcleo de resolución que permitan a una persona o agente descubrir,
@@ -62,12 +72,13 @@ agent-kits update [<id>...] --project <path> [--yes] [--force] [--json]
 agent-kits remove <id>... --project <path> [--yes] [--json]
 agent-kits list --project <path> [--json]
 agent-kits doctor --project <path> [--json]
-agent-kits import --project <path> [--yes] [--json]
+agent-kits migrate --project <path> [--yes] [--json]
 agent-kits version [--json]
 ```
 
-`import` adopta un workspace creado por `kits-init` (D-022). Todo comando mutante acepta
-`--json` y requiere `--yes` cuando el plan escribe archivos.
+`migrate` adopta un workspace creado por `kits-init` y lo retira (D-031); `import` quedó
+como alias deprecado de la misma operación. Todo comando mutante acepta `--json` y requiere
+`--yes` cuando el plan escribe archivos.
 
 ### Códigos de salida
 
@@ -102,8 +113,8 @@ docs/
 └── context/
 ```
 
-El catálogo heredado permanecerá sin mover hasta que una tarea de migración aprobada
-indique la estructura de destino.
+El catálogo migró a manifests nativos el 2026-07-30 (D-034): cada recurso vive en su propio
+directorio con un `agent-kit.json`. El layout resultante está documentado en `docs/cli.md`.
 
 ## 5. Estilo y naming
 
@@ -287,7 +298,7 @@ Verificados el 2026-07-29 contra el catálogo heredado real (75 recursos):
 
 Añadidos durante la implementación:
 
-- [x] Un workspace creado por `kits-init` puede adoptarse con `import` (D-022).
+- [x] Un workspace creado por `kits-init` puede adoptarse (D-022; hoy con `migrate`, D-031).
 - [x] Dos recursos que escriben el mismo archivo bloquean la operación (D-028).
 - [x] Una operación fallida restaura el proyecto a su estado anterior.
 

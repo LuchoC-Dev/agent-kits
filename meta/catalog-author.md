@@ -8,7 +8,17 @@ invocation:
   output: reporte de creación — archivos creados, archivos modificados (wiring), auto-verificación y BLOCKERS si el brief era insuficiente
   interactive: false
 writes_files: true
+status: stale
 ---
+
+> [!WARNING]
+> **Desactualizado desde el 2026-07-30.** Este agente describe el layout anterior del
+> catálogo —agentes y workflows como `.md` sueltos, sin manifest— que dejó de existir con
+> D-034: hoy cada recurso vive en su propio directorio con un `agent-kit.json`, y ese
+> manifest es la fuente de la identidad, la versión y las dependencias.
+>
+> No lo uses para crear recursos hasta actualizarlo. La superficie de autoría sigue fuera
+> del alcance de Agent Kits (D-003, D-013), así que su rediseño es una decisión pendiente.
 
 # Identidad
 
