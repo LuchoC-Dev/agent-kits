@@ -56,6 +56,18 @@ func (a *App) openProject(opts *options, needCatalog bool) (*projectContext, err
 	return ctx, nil
 }
 
+// requireMigrated refuses to change a project that still carries an unmigrated
+// workspace.json, so no command ever operates with two sources of truth (D-030).
+//
+// Read-only commands — plan, list, info, doctor — are deliberately not gated: a project
+// pending migration must still be inspectable.
+func (ctx *projectContext) requireMigrated() error {
+	if workspace.Pending(ctx.project) {
+		return workspace.PendingError()
+	}
+	return nil
+}
+
 // buildInstallPlan resolves refs and plans their installation.
 func (ctx *projectContext) buildInstallPlan(refs []string) (*model.Plan, *resolve.Result, error) {
 	resolver := resolve.New(ctx.catalog, ctx.adapter.Name())
@@ -109,6 +121,9 @@ func (a *App) cmdInstall(args []string) error {
 	if err != nil {
 		return err
 	}
+	if err := ctx.requireMigrated(); err != nil {
+		return err
+	}
 	built, _, err := ctx.buildInstallPlan(operands)
 	if err != nil {
 		return emptyCatalogHint(ctx.env, err)
@@ -129,6 +144,9 @@ func (a *App) cmdUpdate(args []string) error {
 	if err != nil {
 		return err
 	}
+	if err := ctx.requireMigrated(); err != nil {
+		return err
+	}
 	refs := operands
 	if len(refs) == 0 {
 		for _, id := range ctx.lock.RequestedIDs() {
@@ -137,7 +155,7 @@ func (a *App) cmdUpdate(args []string) error {
 	}
 	if len(refs) == 0 {
 		return errs.New(errs.CodeNotInstalled, "this project has nothing to update").
-			Hint("install something first, or run `agent-kits import` to adopt an existing workspace")
+			Hint("install something first, or run `agent-kits migrate` to adopt an existing workspace")
 	}
 	built, _, err := ctx.buildInstallPlan(refs)
 	if err != nil {
@@ -161,6 +179,9 @@ func (a *App) cmdRemove(args []string) error {
 	}
 	ctx, err := a.openProject(opts, false)
 	if err != nil {
+		return err
+	}
+	if err := ctx.requireMigrated(); err != nil {
 		return err
 	}
 	built, err := ctx.planner.Remove(operands, ctx.catalog)
@@ -197,7 +218,7 @@ func (a *App) applyPlan(command string, ctx *projectContext, built *model.Plan) 
 		return err
 	}
 
-	installer := install.New(ctx.adapter, ctx.project, resourceIndex(ctx.catalog))
+	installer := install.New(ctx.adapter, ctx.project)
 	report, err := installer.Apply(built)
 	if err != nil {
 		return err
@@ -357,59 +378,5 @@ func (a *App) cmdDoctor(args []string) error {
 	return nil
 }
 
-// cmdImport adopts a workspace created by the conversational kits-init flow.
-func (a *App) cmdImport(args []string) error {
-	set := a.newFlagSet("import")
-	opts := &options{}
-	bindProjectFlags(set, opts)
-	_, err := a.parse(set, args, opts)
-	if err != nil {
-		return err
-	}
-	ctx, err := a.openProject(opts, true)
-	if err != nil {
-		return err
-	}
-	built, err := install.Import(install.ImportInput{
-		Project: ctx.project,
-		Adapter: ctx.adapter,
-		Catalog: ctx.catalog,
-		Force:   opts.force,
-	})
-	if err != nil {
-		return err
-	}
-	if len(built.Changes) == 0 {
-		return a.succeed("import", map[string]any{
-			"operation": "import",
-			"changed":   false,
-			"plan":      built,
-		}, func() {
-			fmt.Fprintln(a.Stdout, "import · nothing to adopt")
-			renderDiagnostics(a.Stdout, "warning", built.Warnings)
-		})
-	}
-	if !a.wantJSON {
-		a.renderPlan(built)
-	}
-	if err := a.confirm(opts, "Record these resources in the lockfile?"); err != nil {
-		return err
-	}
-	installer := install.New(ctx.adapter, ctx.project, resourceIndex(ctx.catalog))
-	report, err := installer.Apply(built)
-	if err != nil {
-		return err
-	}
-	return a.succeed("import", map[string]any{
-		"operation": "import",
-		"changed":   true,
-		"report":    report,
-	}, func() {
-		fmt.Fprintf(a.Stdout, "\n✓ import · adopted %d resource(s)\n", len(built.Resources))
-		fmt.Fprintf(a.Stdout, "  lockfile %s\n", ctx.adapter.LockPath())
-		if len(built.Warnings) > 0 {
-			fmt.Fprintf(a.Stdout, "  %d item(s) were not adopted; run `agent-kits doctor` for detail\n",
-				len(built.Warnings))
-		}
-	})
-}
+// Adopting an inherited workspace lives in migrate_cmd.go: `import` is a deprecated alias
+// of `migrate` and shares its implementation (D-031).

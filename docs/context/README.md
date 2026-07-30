@@ -30,6 +30,7 @@ aisladas o revirtiendo decisiones históricas sin advertirlo.
 | `04-specification.md` | Especificación verificable previa a la implementación. |
 | `05-roadmap.md` | Fases, entregables, dependencias y puertas de validación. |
 | `06-legacy-baseline.md` | Estado comprobado del repositorio heredado y elementos reutilizables. |
+| `07-cli-only-transition-plan.md` | Especificación, migración y tareas para la transición a CLI única. |
 
 ## Orden de precedencia
 
@@ -46,18 +47,30 @@ actual, pero no decide automáticamente el diseño de la nueva versión.
 
 ## Estado de madurez
 
-**Actualizado el 2026-07-29.** El usuario aprobó stack, alcance del MVP, manifests JSON y
-compatibilidad obligatoria con `kits-init`; la puerta de aprobación de
-`04-specification.md §13` quedó superada y el MVP está implementado y verificado.
+**Actualizado el 2026-07-30.** El MVP original está implementado y verificado. La
+compatibilidad obligatoria con `kits-init` fue reemplazada por una transición a CLI única
+(D-029 a D-033), planificada en `07-cli-only-transition-plan.md`.
+
+De esa transición ya están implementadas y verificadas las fases A–F: lockfile v2 como
+única fuente de verdad, `agent-kits migrate`, `import` como alias deprecado, una CLI que no
+escribe ni depende de `workspace.json`, y un catálogo enteramente nativo de 75 recursos
+(D-034) que permitió eliminar el loader heredado y el parser de frontmatter.
+
+La superficie activa `/kits-init` se retiró el 2026-07-30: `SKILL.md`, `repair-upgrade.md`
+y `workspace-schema.md` ya no existen, y `README.md` documenta la CLI. `PROJECT-CONTEXT.md`
+se conserva marcado como historia.
+
+Queda pendiente T19, la verificación contra una source privada real.
 
 | Documento | Estado |
 |---|---|
 | `01-product-context.md` | Draft — sigue siendo la referencia de intención |
 | `02-architecture-direction.md` | Implementado, con las preguntas abiertas resueltas en `§13` |
-| `03-decisions.md` | Active — D-001 a D-028 |
+| `03-decisions.md` | Active — D-001 a D-033 |
 | `04-specification.md` | Implementado y verificado |
 | `05-roadmap.md` | Fases 0–8 completadas (la 6, parcial) |
 | `06-legacy-baseline.md` | Auditoría completada en `§8` |
+| `07-cli-only-transition-plan.md` | Fases A–D implementadas — E–G bloqueadas por el gate |
 
 El contrato de la CLI implementada vive en [`../cli.md`](../cli.md), fuera de esta carpeta:
 `docs/context/` describe intención y decisiones, `docs/cli.md` describe comportamiento.

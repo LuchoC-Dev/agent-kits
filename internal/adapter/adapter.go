@@ -20,7 +20,8 @@ const WorkspaceDir = ".agents"
 // LockName is the lockfile's name inside the workspace.
 const LockName = "agent-kits.lock.json"
 
-// WorkspaceFile is the inherited workspace descriptor kits-init reads and writes.
+// WorkspaceFile is the inherited descriptor the retired kits-init flow used to write. No
+// adapter targets it: it survives here only so the migration can name it (D-030).
 const WorkspaceFile = "workspace.json"
 
 // Auto is the runtime selector that asks the adapter registry to detect the environment.
@@ -28,14 +29,13 @@ const Auto = "auto"
 
 // Adapter places resources for one runtime.
 type Adapter interface {
-	// Name is the runtime identifier recorded in the lockfile and workspace.json.
+	// Name is the runtime identifier recorded in the lockfile.
 	Name() string
 	// Destination returns the project-relative, slash-separated path for one file of a
 	// resource, given that file's path relative to the resource root.
 	Destination(res *model.Resource, rel string) (string, error)
-	// LockPath and WorkspacePath are the metadata files the runtime uses.
+	// LockPath is the only metadata file a runtime carries (D-030).
 	LockPath() string
-	WorkspacePath() string
 }
 
 // workspaceAdapter implements the .agents layout. The three supported runtimes share it
@@ -47,24 +47,25 @@ func (a workspaceAdapter) Name() string { return a.name }
 
 func (a workspaceAdapter) LockPath() string { return WorkspaceDir + "/" + LockName }
 
-func (a workspaceAdapter) WorkspacePath() string { return WorkspaceDir + "/" + WorkspaceFile }
-
-// Destination reproduces the directory layout the inherited kits-init flow creates, so a
-// workspace stays readable by both the CLI and the conversational skill (D-022).
+// Destination keeps the portable .agents layout the inherited flow established. The layout
+// is now the CLI's own: a project migrated onto lockfile v2 keeps every path it had, so
+// retiring workspace.json moves no file (07-cli-only-transition-plan.md §7).
 func (a workspaceAdapter) Destination(res *model.Resource, rel string) (string, error) {
 	clean := strings.TrimPrefix(strings.ReplaceAll(rel, `\`, "/"), "./")
 	if clean == "" {
-		return "", errs.New(errs.CodeUnsafePath, "resource %s declares an empty file path", res.ID)
+		return "", errs.New(errs.CodeUnsafePath, "resource %s declares an empty file path", res.Name)
 	}
+	// The destination comes from the install name, never from the identity: a UUID would
+	// make a workspace unreadable, and the name is exactly what the user asked for (D-036).
 	switch res.Type {
 	case model.TypeSkill:
-		return join(WorkspaceDir, "skills", res.ID.Name(), clean), nil
+		return join(WorkspaceDir, "skills", res.Name, clean), nil
 	case model.TypeAgent:
 		return join(WorkspaceDir, "agents", clean), nil
 	case model.TypeWorkflow:
 		return join(WorkspaceDir, "workflows", clean), nil
 	case model.TypeKit:
-		return join(WorkspaceDir, "packs", res.ID.Name(), clean), nil
+		return join(WorkspaceDir, "packs", res.Name, clean), nil
 	}
 	return "", errs.New(errs.CodeRuntimeUnsupported,
 		"runtime %s cannot place a resource of type %q", a.name, res.Type)

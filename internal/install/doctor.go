@@ -109,21 +109,21 @@ func Doctor(in DoctorInput) (*DoctorReport, error) {
 			owned[file.Path] = true
 			abs, containErr := security.Contain(in.Project, file.Path)
 			if containErr != nil {
-				problem(errs.CodeUnsafePath, string(record.ID), file.Path, containErr.Error())
+				problem(errs.CodeUnsafePath, record.Name, file.Path, containErr.Error())
 				continue
 			}
 			if !fsutil.Exists(abs) {
-				problem(errs.CodeIntegrityMismatch, string(record.ID), file.Path,
+				problem(errs.CodeIntegrityMismatch, record.Name, file.Path,
 					"file recorded in the lockfile is missing")
 				continue
 			}
 			sum, _, sumErr := fsutil.ChecksumFile(abs)
 			if sumErr != nil {
-				problem(errs.CodeInternal, string(record.ID), file.Path, sumErr.Error())
+				problem(errs.CodeInternal, record.Name, file.Path, sumErr.Error())
 				continue
 			}
 			if sum != file.Checksum {
-				problem(errs.CodeLocalDivergence, string(record.ID), file.Path,
+				problem(errs.CodeLocalDivergence, record.Name, file.Path,
 					"file was modified after it was installed")
 			}
 		}
@@ -132,33 +132,29 @@ func Doctor(in DoctorInput) (*DoctorReport, error) {
 		}
 		current, found := in.Catalog.Get(record.ID)
 		if !found {
-			problem(errs.CodeNotFound, string(record.ID), "",
+			problem(errs.CodeNotFound, record.Name, "",
 				"installed resource is no longer offered by any configured source")
 			continue
 		}
 		if current.Version != record.Version {
-			note(errs.CodeNotFound, string(record.ID), "",
+			note(errs.CodeNotFound, record.Name, "",
 				"an update is available: "+record.Version+" -> "+current.Version)
 		}
 	}
 
 	// Managed directories may contain files no lockfile claims — typically a workspace
-	// created by the conversational flow, which `import` can adopt.
+	// created by the retired conversational flow, which `migrate` can adopt.
 	for _, orphan := range findOrphans(in.Project, owned) {
 		note(errs.CodeWorkspaceInvalid, "", orphan,
-			"file is not recorded in the lockfile; `agent-kits import` can adopt it")
+			"file is not recorded in the lockfile; `agent-kits migrate` can adopt it")
 	}
 
-	descriptor, present, err := workspace.LoadDescriptor(in.Project, in.Adapter)
-	switch {
-	case err != nil:
-		problem(errs.CodeOf(err), "", in.Adapter.WorkspacePath(), err.Error())
-	case !present && len(lock.Resources) > 0:
-		problem(errs.CodeWorkspaceInvalid, "", in.Adapter.WorkspacePath(),
-			"workspace descriptor is missing while the lockfile records resources")
-	case present && descriptor.Runtime != "" && descriptor.Runtime != in.Adapter.Name():
-		note(errs.CodeRuntimeUnsupported, "", in.Adapter.WorkspacePath(),
-			"workspace was initialised for runtime "+descriptor.Runtime)
+	// A project that still carries workspace.json has two files claiming to describe it.
+	// That is reported with the existing vocabulary: the migration is the remedy, and no
+	// new public error code is introduced for it (§7).
+	if workspace.Pending(in.Project) {
+		problem(errs.CodeWorkspaceInvalid, "", workspace.LegacyPath,
+			"this project has not been migrated yet; run `agent-kits migrate --project <path>`")
 	}
 
 	sortDiagnostics(report.Problems)

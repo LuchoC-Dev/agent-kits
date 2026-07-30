@@ -18,25 +18,82 @@ El binario es estático y no requiere runtime instalado. La única dependencia e
 |---|---|
 | `~/.agent-kits/sources.json` | sources configuradas |
 | `~/.agent-kits/cache/<source>/` | espejo local de las sources remotas |
-| `<proyecto>/.agents/agent-kits.lock.json` | lockfile del proyecto |
-| `<proyecto>/.agents/workspace.json` | descriptor compartido con `kits-init` |
+| `<proyecto>/.agents/agent-kits.lock.json` | **único** estado del proyecto (lockfile v2) |
+| `<proyecto>/.agents/workspace.json.migrated.bak` | copia intacta que deja `migrate`, propiedad del usuario |
 
 `AGENT_KITS_HOME` reubica el directorio base completo. Es lo que usan los tests y lo que
 permite tener perfiles aislados.
 
 ## Modelo
 
-Un **recurso** es una `skill`, un `agent`, un `workflow` o un `kit` (D-020). Su identidad
-es un ID canónico en una de dos formas (D-019):
+Un **recurso** es una `skill`, un `agent`, un `workflow` o un `kit` (D-020).
+
+Su **identidad** es un UUID asignado una vez y para siempre (D-035). Su **nombre** es cómo
+lo pedís y dónde se instala, y puede cambiar (D-036). Pertenecer a un kit es una relación,
+no parte de la identidad: mover un recurso de un kit a otro no cambia quién es.
+
+| | Qué es | ¿Cambia? |
+|---|---|---|
+| `id` | la identidad | nunca |
+| `name` | el nombre de instalación | sí, es un rename explícito |
+| kit | una relación de composición | libremente |
+
+Por eso un rename no rompe nada: el lockfile registra la identidad, así que sigue
+apuntando al mismo recurso aunque su nombre cambie.
+
+### Cómo se referencia un recurso
 
 ```text
-frontend-design               recurso del pool global
-backend/feature-development   recurso cuya identidad pertenece a un kit
+frontend-design          el nombre, cuando una sola source lo ofrece
+acme:frontend-design     calificado por source, cuando varias lo ofrecen
+9f2c1b7a-…               el UUID, que siempre funciona
 ```
 
-Una referencia corta se acepta cuando identifica un solo recurso. Si coincide con más de
-uno, el comando falla con `ambiguous_id` y lista los candidatos: nunca elige por
-precedencia.
+El nombre es único **dentro de una source**. Entre sources puede repetirse: dos
+organizaciones pueden publicar cada una su `frontend-design` y son recursos distintos. Si
+una referencia corta coincide con más de uno, el comando falla con `ambiguous_id` y lista
+los candidatos calificados. Nunca elige por precedencia.
+
+Dos recursos con el mismo **nombre de instalación** no pueden coexistir en un proyecto:
+dos archivos no ocupan la misma ruta. Eso es `destination_conflict` (D-028).
+
+## Layout de una source
+
+Cada recurso vive en su propio directorio y se describe con un `agent-kit.json` (D-017).
+Es el **único** layout reconocido: el adaptador que sintetizaba manifests desde el
+Markdown heredado se retiró cuando todo el catálogo pasó a ser nativo (D-034).
+
+```text
+skills/<id>/agent-kit.json          + SKILL.md y sus archivos
+agents/<id>/agent-kit.json          + <archivo>.md
+packs/<kit>/agent-kit.json          + pack.md
+packs/<kit>/agents/<id>/…           agentes que el kit posee
+packs/<kit>/workflows/<id>/…        workflows que el kit posee
+```
+
+```json
+{
+  "schema_version": 1,
+  "id": "7b6b5f3c-1e2d-4a90-8c31-5f0be2a7d914",
+  "name": "backend-feature-development",
+  "type": "workflow",
+  "version": "1.0.0",
+  "description": "…",
+  "dependencies": [
+    { "id": "5c954f33-73e3-4c05-b1b0-9d72baff0182", "name": "tdd" }
+  ],
+  "files": ["backend-feature-development.md"]
+}
+```
+
+`files` es relativo al directorio del manifest y decide **la ruta instalada**, no la
+ubicación en la source: mover un recurso de directorio no cambia dónde aterriza. Si se
+omite, se descubren todos los archivos del directorio.
+
+Una dependencia apunta a la **identidad**, no al nombre, así que sobrevive a un rename del
+recurso del que depende. El `name` que la acompaña es informativo —una lista de UUIDs es
+ilegible— y se verifica contra el recurso resuelto: si no coincide, se informa que el
+manifest quedó desactualizado. También se admite la forma corta `"<uuid>"`.
 
 ## Comandos
 
@@ -54,6 +111,23 @@ agent-kits info <id> [--json]
 `source add` acepta una ruta local, una URL `file://` o un remoto Git. Solo los remotos
 usan cache y requieren `sync`.
 
+### Sources emparentadas por publicación
+
+`--publishes <source>` declara que una source es **el espejo publicado** de otra: el
+público de Agent Kits es el subconjunto publicado del privado (D-038).
+
+```powershell
+agent-kits source add private https://github.com/LuchoC-Dev/repository-private.git --access private
+agent-kits source add public  https://github.com/LuchoC-Dev/repository.git --publishes private
+```
+
+Un recurso publicado existe en las dos y comparte identidad. Entre sources emparentadas eso
+es lo esperado, no un duplicado: gana el **origen privado**, que por construcción está igual
+o más adelantado, y el recurso aparece una sola vez al buscar o resolver. Entre sources **no**
+emparentadas, una identidad repetida sigue siendo `registry_integrity_error`.
+
+La precedencia no se infiere nunca: existe solo porque alguien la declaró.
+
 ### Proyecto
 
 ```text
@@ -63,9 +137,13 @@ agent-kits update [<id>...] --project <path> [--yes] [--force] [--json]
 agent-kits remove <id>...  --project <path> [--yes] [--json]
 agent-kits list            --project <path> [--json]
 agent-kits doctor          --project <path> [--json]
-agent-kits import         --project <path> [--yes] [--force] [--json]
+agent-kits migrate         --project <path> [--yes] [--json]
 agent-kits version [--json]
 ```
+
+`agent-kits import` sigue existiendo como **alias deprecado** de `migrate`: comparte su
+implementación, avisa por `stderr` y añade un campo `deprecated` al JSON. Se elimina en un
+cambio posterior aprobado (D-031).
 
 Los flags pueden ir antes o después de los operandos: `install frontend-design --project .`
 y `install --project . frontend-design` son equivalentes.
@@ -150,28 +228,69 @@ Aplicar un plan es journalizado: cada archivo que se sobrescribe o borra se copi
 directorio temporal fuera del proyecto, y cualquier fallo restaura el estado anterior. No
 queda una instalación a medio aplicar.
 
-## Compatibilidad con `kits-init`
+## Estado del proyecto
 
-El layout de destino es exactamente el que produce el flujo conversacional heredado:
+El lockfile v2 concentra **todo** el estado que Agent Kits administra (D-030): identidad
+del proyecto, stack, disciplinas, recursos instalados con sus archivos y checksums, y el
+registro de la migración si la hubo.
 
 ```text
 .agents/
-├── agent-kits.lock.json
-├── workspace.json
+├── agent-kits.lock.json     ← único estado
 ├── skills/<skill>/…
 ├── agents/<agent>.md
 ├── workflows/<workflow>.md
 └── packs/<kit>/pack.md
 ```
 
-`workspace.json` se lee y escribe en el esquema v2, conservando el orden documentado de
-campos y **todo** campo que la CLI no administra. Un workspace v1 se actualiza a v2
-ganando el campo `disciplines`.
+`project.id` y `project.created_at` se asignan en la primera escritura y **no cambian
+nunca** después: instalar, actualizar, eliminar o migrar los preservan.
 
-`agent-kits import` adopta un workspace creado por `kits-init` y genera su lockfile. La
-adopción es conservadora: un recurso se adopta solo si **todos** sus archivos coinciden
-byte a byte con el catálogo. Los que difieren se informan y no se adoptan, porque
-registrarlos haría que un `update` posterior sobrescribiera la diferencia en silencio.
+Un lockfile v1 sigue siendo legible: se actualiza en memoria al leerlo, así que toda
+escritura produce v2. Un `schema_version` desconocido falla con `workspace_invalid`.
+
+## Migración desde `kits-init`
+
+`workspace.json` ya no se escribe. Un proyecto creado por el flujo conversacional heredado
+se adopta una sola vez:
+
+```powershell
+agent-kits migrate --project . --json   # calcula el plan, no escribe
+agent-kits migrate --project . --yes    # lo aplica
+```
+
+La migración:
+
+- genera y valida el lockfile v2 **antes** de retirar `workspace.json`;
+- conserva identidad, stack, disciplinas y fechas de instalación heredadas;
+- guarda en `migration` los datos históricos (`pack`, `flags`, `structure`,
+  `system_version`) y **todo** campo desconocido, tal cual estaba;
+- escribe `.agents/workspace.json.migrated.bak` con los bytes originales, no con una
+  reserialización;
+- aplica lockfile, backup y retirada como una sola operación journalizada: si algo falla,
+  el proyecto queda exactamente como estaba.
+
+Es idempotente: repetirla no cambia ningún archivo. Si se interrumpió después del backup,
+la siguiente ejecución solo completa la retirada.
+
+La adopción de recursos es conservadora y **fail-closed**:
+
+| Situación | Resultado |
+|---|---|
+| todos los archivos coinciden con el catálogo | se adopta |
+| un archivo administrado difiere | **bloquea** con `local_divergence` |
+| un recurso declarado en `workspace.json` no se identifica | **bloquea** |
+| un archivo suelto en `.agents/` no se identifica | se informa y se deja como está |
+| ya existe un backup con contenido distinto | **bloquea** con `integrity_mismatch` |
+
+`migrate` no acepta `--force`: una migración de estado nunca descarta datos para continuar.
+
+Mientras exista un `workspace.json` sin migrar, `install`, `update` y `remove` se detienen
+con `workspace_invalid` y no escriben nada — un proyecto nunca se opera con dos fuentes de
+verdad. `plan`, `list`, `info` y `doctor` siguen funcionando; `doctor` informa que la
+migración es necesaria.
+
+El backup es propiedad del usuario: Agent Kits no lo borra nunca.
 
 ## Seguridad
 
@@ -193,15 +312,16 @@ internal/
 ├── model/             vocabulario canónico
 ├── errs/              códigos de error y exit codes
 ├── semver/            subconjunto de SemVer aprobado
-├── frontmatter/       parser del YAML que usa el catálogo heredado
 ├── source/            sources y cache
 ├── git/               lista blanca de subcomandos
-├── catalog/           carga nativa, adaptador legacy y unicidad
+├── catalog/           carga de manifests nativos y unicidad
 ├── resolve/           resolución de dependencias
 ├── plan/              planificación determinística
-├── install/           aplicación, lockfile, doctor e import
+├── install/           aplicación, lockfile y doctor
+├── migrate/           transición a lockfile v2 (temporal)
+├── journal/           backup y rollback de una operación
 ├── adapter/           destinos por runtime
-├── workspace/         lockfile y workspace.json
+├── workspace/         lockfile (y lector heredado en legacy.go)
 ├── security/          rutas, límites y secretos
 ├── fsutil/            checksums y escritura atómica
 └── internaltest/      fixtures de test

@@ -30,6 +30,13 @@ type Source struct {
 	Ref    string       `json:"ref,omitempty"`
 	Access model.Access `json:"access"`
 	Trust  model.Trust  `json:"trust"`
+	// Publishes names the source this one is the published mirror of (D-038).
+	//
+	// A resource that has been published exists in both, sharing one identity, and that is
+	// the normal state rather than a duplicate. Declaring the relationship is what lets the
+	// catalog tell "the same resource, published" apart from "two resources claiming one
+	// identity", without ever breaking a tie by source order.
+	Publishes string `json:"publishes,omitempty"`
 }
 
 // Config is the persisted source list.
@@ -38,19 +45,17 @@ type Config struct {
 	Sources       []Source `json:"sources"`
 }
 
-// namePattern keeps source names usable as directory names.
-var namePattern = model.ParseID
-
 // Validate normalises and checks a source declaration.
+//
+// A source name is kebab-case for two reasons: it has to work as a directory name in the
+// cache, and it is the qualifier of a reference — `acme:frontend-design` — so it must not
+// contain the separator (D-036).
 func (s *Source) Validate() error {
 	s.Name = strings.TrimSpace(s.Name)
 	s.URL = strings.TrimSpace(s.URL)
-	if _, err := namePattern(s.Name); err != nil {
+	if _, err := model.ParseName(s.Name); err != nil {
 		return errs.New(errs.CodeUsage,
 			"invalid source name %q: use lower-case kebab-case", s.Name)
-	}
-	if strings.ContainsRune(s.Name, '/') {
-		return errs.New(errs.CodeUsage, "source name %q may not contain a slash", s.Name)
 	}
 	if s.URL == "" {
 		return errs.New(errs.CodeUsage, "source %s declares no url", s.Name)
@@ -71,7 +76,24 @@ func (s *Source) Validate() error {
 		return errs.New(errs.CodeUsage,
 			"source %s declares unknown trust %q (trusted|review)", s.Name, s.Trust)
 	}
+	s.Publishes = strings.TrimSpace(s.Publishes)
+	if s.Publishes != "" {
+		if _, err := model.ParseName(s.Publishes); err != nil {
+			return errs.New(errs.CodeUsage,
+				"source %s declares an invalid origin %q", s.Name, s.Publishes)
+		}
+		if s.Publishes == s.Name {
+			return errs.New(errs.CodeUsage, "source %s cannot publish itself", s.Name)
+		}
+	}
 	return nil
+}
+
+// Mirrors reports whether a and b are the two ends of one publication relationship, in
+// which case sharing an identity is expected rather than a conflict (D-038).
+func Mirrors(a, b Source) bool {
+	return (a.Publishes != "" && a.Publishes == b.Name) ||
+		(b.Publishes != "" && b.Publishes == a.Name)
 }
 
 // IsLocal reports whether the source is a directory on this machine rather than a remote

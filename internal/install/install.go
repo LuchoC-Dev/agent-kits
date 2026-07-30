@@ -1,8 +1,7 @@
 // Package install applies approved plans to a project.
 //
-// Application is journalled: every file the operation overwrites or deletes is copied
-// aside first, and any failure restores the project to its previous state. A partially
-// applied install is never left behind (02-architecture-direction.md §7).
+// Application is journalled (see internal/journal): any failure restores the project to
+// its previous state, so a partially applied install is never left behind.
 package install
 
 import (
@@ -13,6 +12,7 @@ import (
 	"github.com/LuchoC-Dev/agent-kits/internal/adapter"
 	"github.com/LuchoC-Dev/agent-kits/internal/errs"
 	"github.com/LuchoC-Dev/agent-kits/internal/fsutil"
+	"github.com/LuchoC-Dev/agent-kits/internal/journal"
 	"github.com/LuchoC-Dev/agent-kits/internal/model"
 	"github.com/LuchoC-Dev/agent-kits/internal/security"
 	"github.com/LuchoC-Dev/agent-kits/internal/workspace"
@@ -22,14 +22,12 @@ import (
 type Installer struct {
 	Adapter adapter.Adapter
 	Project string
-	// Resources supplies manifest detail for workspace.json enrichment. It may be nil.
-	Resources map[model.ID]*model.Resource
-	Now       func() time.Time
+	Now     func() time.Time
 }
 
 // New returns an installer.
-func New(a adapter.Adapter, project string, resources map[model.ID]*model.Resource) *Installer {
-	return &Installer{Adapter: a, Project: project, Resources: resources, Now: time.Now}
+func New(a adapter.Adapter, project string) *Installer {
+	return &Installer{Adapter: a, Project: project, Now: time.Now}
 }
 
 func (i *Installer) now() time.Time {
@@ -57,6 +55,11 @@ func (i *Installer) Apply(p *model.Plan) (*Report, error) {
 	if p.Blocked() {
 		return nil, blockedError(p)
 	}
+	if workspace.Pending(i.Project) {
+		// Operating on a project with an unmigrated descriptor would leave two files
+		// claiming to describe the same state (D-030). The migration is the only way in.
+		return nil, workspace.PendingError()
+	}
 	report := &Report{
 		Operation: p.Operation,
 		Runtime:   p.Runtime,
@@ -72,11 +75,11 @@ func (i *Installer) Apply(p *model.Plan) (*Report, error) {
 		return report, nil
 	}
 
-	jrnl, err := newJournal(i.Project)
+	jrnl, err := journal.New(i.Project)
 	if err != nil {
 		return nil, err
 	}
-	defer jrnl.discard()
+	defer jrnl.Discard()
 
 	apply := func() error {
 		for _, change := range p.Changes {
@@ -93,7 +96,7 @@ func (i *Installer) Apply(p *model.Plan) (*Report, error) {
 						With("path", change.Path).
 						Hint("re-run the plan")
 				}
-				if err := jrnl.write(change.Path, content); err != nil {
+				if err := jrnl.Write(change.Path, content); err != nil {
 					return err
 				}
 				if change.Action == model.ActionCreate {
@@ -107,7 +110,7 @@ func (i *Installer) Apply(p *model.Plan) (*Report, error) {
 				report.Adopted++
 
 			case model.ActionRemove:
-				if err := jrnl.remove(change.Path); err != nil {
+				if err := jrnl.Remove(change.Path); err != nil {
 					return err
 				}
 				report.Removed++
@@ -117,7 +120,7 @@ func (i *Installer) Apply(p *model.Plan) (*Report, error) {
 	}
 
 	if err := apply(); err != nil {
-		if rollbackErr := jrnl.rollback(); rollbackErr != nil {
+		if rollbackErr := jrnl.Rollback(); rollbackErr != nil {
 			return nil, errs.Wrap(errs.CodeInternal, rollbackErr,
 				"the operation failed (%s) and the rollback did not complete", err.Error())
 		}
@@ -128,32 +131,24 @@ func (i *Installer) Apply(p *model.Plan) (*Report, error) {
 	return report, nil
 }
 
-// writeMetadata rewrites the lockfile and workspace.json.
-func (i *Installer) writeMetadata(jrnl *journal, p *model.Plan) error {
+// writeMetadata rewrites the lockfile, which is the only state file Agent Kits owns.
+func (i *Installer) writeMetadata(jrnl *journal.Journal, p *model.Plan) error {
 	if p.Lock == nil {
 		return errs.New(errs.CodeInternal, "plan carries no proposed lockfile")
+	}
+	// A project keeps one identity for its whole life, assigned on its first write.
+	if p.Lock.Project == nil {
+		id, err := model.NewProjectID()
+		if err != nil {
+			return err
+		}
+		p.Lock.EnsureProject(id, i.now().UTC().Format(time.RFC3339))
 	}
 	lockBytes, err := workspace.LockBytes(p.Lock)
 	if err != nil {
 		return err
 	}
-	if err := jrnl.write(i.Adapter.LockPath(), lockBytes); err != nil {
-		return err
-	}
-
-	existing, _, err := workspace.LoadDescriptor(i.Project, i.Adapter)
-	if err != nil {
-		return err
-	}
-	descriptor, err := workspace.Sync(existing, p.Lock, i.Adapter.Name(), i.Resources, i.now())
-	if err != nil {
-		return err
-	}
-	descriptorBytes, err := workspace.DescriptorBytes(descriptor)
-	if err != nil {
-		return err
-	}
-	return jrnl.write(i.Adapter.WorkspacePath(), descriptorBytes)
+	return jrnl.Write(i.Adapter.LockPath(), lockBytes)
 }
 
 // pruneEmptyDirs removes directories left empty by removals, so uninstalling a resource

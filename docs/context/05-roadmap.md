@@ -3,6 +3,13 @@
 **Estado:** Fases 0–7 completadas
 **Fecha:** 2026-07-29
 
+> **Roadmap siguiente:** la transición a CLI única, lockfile v2 y catálogo mínimo fue
+> aprobada el 2026-07-30. Sus fases y gates están en
+> `07-cli-only-transition-plan.md`. Este documento conserva el historial del MVP original.
+>
+> Esa transición se completó el 2026-07-30. La evolución continúa en D-035 a D-039:
+> identidad por UUID, catálogo en su propio repositorio y publicación por CI.
+
 Este roadmap describe puertas de validación.
 
 ## Estado por fase
@@ -15,12 +22,12 @@ Este roadmap describe puertas de validación.
 | 3 — Núcleo de catálogo y resolución | ✅ | `internal/catalog`, `internal/resolve` |
 | 4 — Planificador | ✅ | `internal/plan`, plan determinístico y reproducible |
 | 5 — Instalación segura | ✅ | `internal/install`, lockfile, rollback, remove, doctor |
-| 6 — Sources remotas y privacidad | ⚠️ parcial | cache, sync y reglas de visibilidad implementadas; sin probar contra un remoto privado real |
+| 6 — Sources remotas y privacidad | ✅ | verificada el 2026-07-30 contra `LuchoC-Dev/repository-private`: una identidad autorizada sincroniza; una sin permisos recibe `source_unavailable` y no descubre nada |
 | 7 — Adaptadores | ✅ | `agents`, `claude-code`, `opencode` (D-021) |
-| 8 — Compatibilidad y adopción | ✅ | `import`, `workspace.json` v2 (D-022) |
+| 8 — Compatibilidad y adopción | ✅ | adopción de workspaces heredados; hoy vía `migrate` (D-031) |
 
 La Fase 8 se adelantó porque la compatibilidad con `kits-init` pasó a ser un requisito, no
-una opción. Lo que resta de la Fase 6 es verificación con credenciales reales, no diseño.
+una opción. Todas las fases están cerradas.
 
 ## Fase 0 — Baseline y seguridad del fork
 
@@ -225,14 +232,10 @@ comenzar en paralelo con contratos todavía inestables.
 
 ## Próxima acción recomendada
 
-El MVP está implementado y verificado. Lo que sigue, en orden de valor:
+Las cinco acciones que este roadmap enumeraba se resolvieron: la colisión de destino
+(D-034), las versiones reales (D-034), la topología y la verificación de la source privada
+(D-037, T19) y la migración a manifests nativos (D-034). La autoría sigue fuera de alcance
+(D-003, D-013).
 
-1. **Corregir la colisión de destino del catálogo** — renombrar uno de los dos
-   `feature-development` (ver `06-legacy-baseline.md §8`, Hallazgo 2). Hoy `backend` y
-   `frontend` no pueden coexistir en un proyecto.
-2. **Versionar los recursos heredados** — sin versiones reales, `update` no distingue
-   cambios de contenido dentro de una misma versión (Hallazgo 4).
-3. **Acordar el remoto `origin`** y probar la Fase 6 contra una source privada real.
-4. **Decidir si el catálogo migra a manifests nativos** o permanece en el layout heredado
-   consumido por el adaptador.
-5. **Diseñar la superficie de autoría**, que sigue fuera del alcance de esta CLI (D-003).
+Lo que sigue vive en las decisiones D-037 a D-039: el workflow de publicación que lleva
+recursos del catálogo privado a su espejo público.

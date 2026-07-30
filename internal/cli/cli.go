@@ -18,7 +18,6 @@ import (
 	"github.com/LuchoC-Dev/agent-kits/internal/adapter"
 	"github.com/LuchoC-Dev/agent-kits/internal/catalog"
 	"github.com/LuchoC-Dev/agent-kits/internal/errs"
-	"github.com/LuchoC-Dev/agent-kits/internal/model"
 	"github.com/LuchoC-Dev/agent-kits/internal/source"
 )
 
@@ -101,6 +100,7 @@ func init() {
 		"remove":  (*App).cmdRemove,
 		"list":    (*App).cmdList,
 		"doctor":  (*App).cmdDoctor,
+		"migrate": (*App).cmdMigrate,
 		"import":  (*App).cmdImport,
 		"version": (*App).cmdVersion,
 	}
@@ -122,8 +122,8 @@ project
   update [<id>...]              re-install requested resources at their current version
   remove <id>...                uninstall resources and orphaned dependencies
   list                          list what this project has installed
-  import                        adopt a workspace created by kits-init
   doctor                        diagnose sources and the project
+  migrate                       move an inherited workspace onto the lockfile
 
   version                       print version, runtimes and error codes
 
@@ -338,18 +338,6 @@ func (e *environment) requireCatalog() (*catalog.Catalog, error) {
 		return e.catalog, nil
 	}
 	return e.catalog, nil
-}
-
-// resourceIndex maps ids to resources, for workspace enrichment.
-func resourceIndex(cat *catalog.Catalog) map[model.ID]*model.Resource {
-	out := map[model.ID]*model.Resource{}
-	if cat == nil {
-		return out
-	}
-	for _, res := range cat.All() {
-		out[res.ID] = res
-	}
-	return out
 }
 
 // emptyCatalogHint augments a not-found failure when nothing is configured yet.

@@ -7,19 +7,22 @@ import (
 	"github.com/LuchoC-Dev/agent-kits/internal/model"
 )
 
-func resource(id string, typ model.Type) *model.Resource {
-	return &model.Resource{Manifest: model.Manifest{ID: model.ID(id), Type: typ}}
+// resource builds a fixture whose install name is what decides its destination (D-036).
+func resource(name string, typ model.Type) *model.Resource {
+	return &model.Resource{Manifest: model.Manifest{
+		ID: "9f2c1b7a-9d84-4e11-b6f2-77c1a9e0d512", Name: name, Type: typ,
+	}}
 }
 
-// The destination layout must reproduce what the inherited kits-init flow creates, so a
-// workspace stays readable by both surfaces (D-022).
+// The destination is derived from the install name, never from the identity: a UUID would
+// make a workspace unreadable (D-036).
 func TestDestinationReproducesLegacyLayout(t *testing.T) {
 	a, err := Get("claude-code")
 	if err != nil {
 		t.Fatal(err)
 	}
 	cases := []struct {
-		id   string
+		name string
 		typ  model.Type
 		rel  string
 		want string
@@ -27,18 +30,18 @@ func TestDestinationReproducesLegacyLayout(t *testing.T) {
 		{"problem-framing", model.TypeSkill, "SKILL.md", ".agents/skills/problem-framing/SKILL.md"},
 		{"problem-framing", model.TypeSkill, "references/a.md", ".agents/skills/problem-framing/references/a.md"},
 		{"design-critic", model.TypeAgent, "design-critic.md", ".agents/agents/design-critic.md"},
-		{"context/context-builder", model.TypeAgent, "context-builder.md", ".agents/agents/context-builder.md"},
-		{"context/context-building", model.TypeWorkflow, "context-building.md", ".agents/workflows/context-building.md"},
+		{"context-builder", model.TypeAgent, "context-builder.md", ".agents/agents/context-builder.md"},
+		{"context-building", model.TypeWorkflow, "context-building.md", ".agents/workflows/context-building.md"},
 		{"context", model.TypeKit, "pack.md", ".agents/packs/context/pack.md"},
 	}
 	for _, tc := range cases {
-		got, err := a.Destination(resource(tc.id, tc.typ), tc.rel)
+		got, err := a.Destination(resource(tc.name, tc.typ), tc.rel)
 		if err != nil {
-			t.Errorf("Destination(%s, %s) returned %v", tc.id, tc.rel, err)
+			t.Errorf("Destination(%s, %s) returned %v", tc.name, tc.rel, err)
 			continue
 		}
 		if got != tc.want {
-			t.Errorf("Destination(%s, %s) = %q, want %q", tc.id, tc.rel, got, tc.want)
+			t.Errorf("Destination(%s, %s) = %q, want %q", tc.name, tc.rel, got, tc.want)
 		}
 	}
 }
@@ -112,12 +115,16 @@ func TestGetAndDetect(t *testing.T) {
 	}
 }
 
+// The lockfile is the only metadata path an adapter declares (D-030), and every runtime
+// shares it, which is what keeps a workspace portable between them.
 func TestMetadataPaths(t *testing.T) {
-	a, _ := Get("agents")
-	if a.LockPath() != ".agents/agent-kits.lock.json" {
-		t.Errorf("LockPath = %q", a.LockPath())
-	}
-	if a.WorkspacePath() != ".agents/workspace.json" {
-		t.Errorf("WorkspacePath = %q", a.WorkspacePath())
+	for _, name := range Names() {
+		a, err := Get(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if a.LockPath() != ".agents/agent-kits.lock.json" {
+			t.Errorf("%s LockPath = %q", name, a.LockPath())
+		}
 	}
 }

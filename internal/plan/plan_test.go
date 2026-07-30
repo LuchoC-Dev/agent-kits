@@ -72,24 +72,24 @@ func actionOf(p *model.Plan, path string) model.FileAction {
 func TestPlanCreatesFilesAtRuntimeDestinations(t *testing.T) {
 	f := newFixture(t,
 		internaltest.Resource{
-			ID: "problem-framing", Type: model.TypeSkill, Version: "1.0.0",
+			Name: "problem-framing", Type: model.TypeSkill, Version: "1.0.0",
 			Files: map[string]string{"SKILL.md": "# skill\n", "references/a.md": "a\n"},
 		},
 		internaltest.Resource{
-			ID: "context/context-builder", Type: model.TypeAgent, Version: "1.0.0",
+			Name: "context-builder", Type: model.TypeAgent, Version: "1.0.0",
 			Files: map[string]string{"context-builder.md": "# agent\n"},
 		},
 		internaltest.Resource{
-			ID: "context/context-building", Type: model.TypeWorkflow, Version: "1.0.0",
+			Name: "context-building", Type: model.TypeWorkflow, Version: "1.0.0",
 			Files: map[string]string{"context-building.md": "# workflow\n"},
 		},
 		internaltest.Resource{
-			ID: "context", Type: model.TypeKit, Version: "1.0.0",
+			Name: "context", Type: model.TypeKit, Version: "1.0.0",
 			Files: map[string]string{"pack.md": "# pack\n"},
 			Dependencies: []model.Dependency{
 				internaltest.Dep("problem-framing"),
-				internaltest.Dep("context/context-builder"),
-				internaltest.Dep("context/context-building"),
+				internaltest.Dep("context-builder"),
+				internaltest.Dep("context-building"),
 			},
 		},
 	)
@@ -117,14 +117,15 @@ func TestPlanCreatesFilesAtRuntimeDestinations(t *testing.T) {
 	if built.Lock == nil || len(built.Lock.Resources) != 4 {
 		t.Fatalf("proposed lock = %+v", built.Lock)
 	}
-	if len(built.Metadata) != 2 {
+	// The lockfile is the only bookkeeping file an operation rewrites (D-030).
+	if len(built.Metadata) != 1 || built.Metadata[0].Path != f.adapter.LockPath() {
 		t.Errorf("metadata = %+v", built.Metadata)
 	}
 }
 
 func TestPlanIsDeterministic(t *testing.T) {
 	f := newFixture(t, internaltest.Resource{
-		ID: "a", Type: model.TypeSkill, Version: "1.0.0",
+		Name: "a", Type: model.TypeSkill, Version: "1.0.0",
 		Files: map[string]string{"one.md": "1\n", "two.md": "2\n", "nested/three.md": "3\n"},
 	})
 	first := f.install("a")
@@ -143,7 +144,7 @@ func TestPlanIsDeterministic(t *testing.T) {
 func TestPlanThreeWayClassification(t *testing.T) {
 	const content = "new content\n"
 	f := newFixture(t, internaltest.Resource{
-		ID: "a", Type: model.TypeSkill, Version: "1.0.0",
+		Name: "a", Type: model.TypeSkill, Version: "1.0.0",
 		Files: map[string]string{"SKILL.md": content},
 	})
 	path := ".agents/skills/a/SKILL.md"
@@ -152,7 +153,7 @@ func TestPlanThreeWayClassification(t *testing.T) {
 	track := func(checksum string) {
 		f.lock = model.NewLock(f.adapter.Name())
 		f.lock.Upsert(model.LockResource{
-			ID: "a", Type: model.TypeSkill, Version: "1.0.0",
+			ID: internaltest.IDOf("a"), Name: "a", Type: model.TypeSkill, Version: "1.0.0",
 			Files: []model.LockFile{{Path: path, Checksum: checksum}},
 		})
 	}
@@ -203,7 +204,7 @@ func TestPlanThreeWayClassification(t *testing.T) {
 
 func TestPlanForceConvertsDivergenceToUpdate(t *testing.T) {
 	f := newFixture(t, internaltest.Resource{
-		ID: "a", Type: model.TypeSkill, Version: "1.0.0",
+		Name: "a", Type: model.TypeSkill, Version: "1.0.0",
 		Files: map[string]string{"SKILL.md": "new\n"},
 	})
 	path := ".agents/skills/a/SKILL.md"
@@ -232,17 +233,19 @@ func TestPlanForceConvertsDivergenceToUpdate(t *testing.T) {
 
 // Two resources that write the same destination is an integrity problem, not a race.
 func TestPlanDetectsDestinationConflict(t *testing.T) {
+	// Two different resources, each with its own identity and name, whose declared files
+	// land on the same path. Only one of them can occupy it (D-028).
 	f := newFixture(t,
 		internaltest.Resource{
-			ID: "backend/feature-development", Type: model.TypeWorkflow, Version: "1.0.0",
+			Name: "backend-feature-development", Type: model.TypeWorkflow, Version: "1.0.0",
 			Files: map[string]string{"feature-development.md": "# backend\n"},
 		},
 		internaltest.Resource{
-			ID: "frontend/feature-development", Type: model.TypeWorkflow, Version: "1.0.0",
+			Name: "frontend-feature-development", Type: model.TypeWorkflow, Version: "1.0.0",
 			Files: map[string]string{"feature-development.md": "# frontend\n"},
 		},
 	)
-	built := f.install("backend/feature-development", "frontend/feature-development")
+	built := f.install("backend-feature-development", "frontend-feature-development")
 	if !built.Blocked() {
 		t.Fatal("a destination collision must block")
 	}
@@ -259,7 +262,7 @@ func TestPlanDetectsDestinationConflict(t *testing.T) {
 
 func TestPlanBlocksOnEmbeddedCredential(t *testing.T) {
 	f := newFixture(t, internaltest.Resource{
-		ID: "leaky", Type: model.TypeSkill, Version: "1.0.0",
+		Name: "leaky", Type: model.TypeSkill, Version: "1.0.0",
 		Files: map[string]string{"SKILL.md": "key: AKIAIOSFODNN7EXAMPLE\n"},
 	})
 	built := f.install("leaky")
@@ -270,16 +273,18 @@ func TestPlanBlocksOnEmbeddedCredential(t *testing.T) {
 
 func TestPlanReportsUpdateAndDowngradeStates(t *testing.T) {
 	f := newFixture(t, internaltest.Resource{
-		ID: "a", Type: model.TypeSkill, Version: "2.0.0",
+		Name: "a", Type: model.TypeSkill, Version: "2.0.0",
 		Files: map[string]string{"SKILL.md": "v2\n"},
 	})
-	f.lock.Upsert(model.LockResource{ID: "a", Type: model.TypeSkill, Version: "1.0.0"})
+	f.lock.Upsert(model.LockResource{
+		ID: internaltest.IDOf("a"), Name: "a", Type: model.TypeSkill, Version: "1.0.0"})
 	if state := f.install("a").Resources[0].State; state != "update" {
 		t.Errorf("state = %q, want update", state)
 	}
 
 	f.lock = model.NewLock(f.adapter.Name())
-	f.lock.Upsert(model.LockResource{ID: "a", Type: model.TypeSkill, Version: "3.0.0"})
+	f.lock.Upsert(model.LockResource{
+		ID: internaltest.IDOf("a"), Name: "a", Type: model.TypeSkill, Version: "3.0.0"})
 	if state := f.install("a").Resources[0].State; state != "downgrade" {
 		t.Errorf("state = %q, want downgrade", state)
 	}
@@ -288,13 +293,13 @@ func TestPlanReportsUpdateAndDowngradeStates(t *testing.T) {
 // A file a resource no longer ships is pruned when the resource is re-planned.
 func TestPlanPrunesRemovedFiles(t *testing.T) {
 	f := newFixture(t, internaltest.Resource{
-		ID: "a", Type: model.TypeSkill, Version: "2.0.0",
+		Name: "a", Type: model.TypeSkill, Version: "2.0.0",
 		Files: map[string]string{"SKILL.md": "v2\n"},
 	})
 	stale := ".agents/skills/a/OLD.md"
 	staleAbs := internaltest.WriteFile(t, f.project, stale, "old\n")
 	f.lock.Upsert(model.LockResource{
-		ID: "a", Type: model.TypeSkill, Version: "1.0.0",
+		ID: internaltest.IDOf("a"), Name: "a", Type: model.TypeSkill, Version: "1.0.0",
 		Files: []model.LockFile{{Path: stale, Checksum: checksumOfFile(t, staleAbs)}},
 	})
 
@@ -307,20 +312,20 @@ func TestPlanPrunesRemovedFiles(t *testing.T) {
 func TestRemovePlanKeepsSharedDependencies(t *testing.T) {
 	f := newFixture(t,
 		internaltest.Resource{
-			ID: "shared", Type: model.TypeSkill, Version: "1.0.0",
+			Name: "shared", Type: model.TypeSkill, Version: "1.0.0",
 			Files: map[string]string{"SKILL.md": "shared\n"},
 		},
 		internaltest.Resource{
-			ID: "solo", Type: model.TypeSkill, Version: "1.0.0",
+			Name: "solo", Type: model.TypeSkill, Version: "1.0.0",
 			Files: map[string]string{"SKILL.md": "solo\n"},
 		},
 		internaltest.Resource{
-			ID: "kit-a", Type: model.TypeKit, Version: "1.0.0",
+			Name: "kit-a", Type: model.TypeKit, Version: "1.0.0",
 			Files:        map[string]string{"pack.md": "a\n"},
 			Dependencies: []model.Dependency{internaltest.Dep("shared"), internaltest.Dep("solo")},
 		},
 		internaltest.Resource{
-			ID: "kit-b", Type: model.TypeKit, Version: "1.0.0",
+			Name: "kit-b", Type: model.TypeKit, Version: "1.0.0",
 			Files:        map[string]string{"pack.md": "b\n"},
 			Dependencies: []model.Dependency{internaltest.Dep("shared")},
 		},
@@ -357,7 +362,7 @@ func TestRemovePlanKeepsSharedDependencies(t *testing.T) {
 }
 
 func TestRemovePlanRejectsUnknownResource(t *testing.T) {
-	f := newFixture(t, internaltest.Resource{ID: "a", Type: model.TypeSkill, Version: "1.0.0"})
+	f := newFixture(t, internaltest.Resource{Name: "a", Type: model.TypeSkill, Version: "1.0.0"})
 	_, err := f.planner().Remove([]string{"a"}, f.catalog)
 	if errs.CodeOf(err) != errs.CodeNotInstalled {
 		t.Fatalf("err = %v, want not_installed", err)
@@ -366,13 +371,13 @@ func TestRemovePlanRejectsUnknownResource(t *testing.T) {
 
 func TestRemovePlanBlocksOnModifiedFile(t *testing.T) {
 	f := newFixture(t, internaltest.Resource{
-		ID: "a", Type: model.TypeSkill, Version: "1.0.0",
+		Name: "a", Type: model.TypeSkill, Version: "1.0.0",
 		Files: map[string]string{"SKILL.md": "content\n"},
 	})
 	path := ".agents/skills/a/SKILL.md"
 	internaltest.WriteFile(t, f.project, path, "edited locally\n")
 	f.lock.Upsert(model.LockResource{
-		ID: "a", Type: model.TypeSkill, Version: "1.0.0", Requested: true,
+		Name: "a", Type: model.TypeSkill, Version: "1.0.0", Requested: true,
 		Files: []model.LockFile{{Path: path, Checksum: "sha256:stale"}},
 	})
 

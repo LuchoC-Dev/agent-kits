@@ -1,93 +1,90 @@
 # agent-kits
 
-> [!IMPORTANT]
-> Este working tree corresponde al fork **Agent Kits Next**, que añade una CLI en Go para
-> descubrir, planificar e instalar recursos desde sources Git — ver
-> [`docs/cli.md`](./docs/cli.md).
->
-> El catálogo y la skill `kits-init` que documenta este README **siguen funcionando sin
-> cambios**: la CLI los consume mediante un adaptador y comparte con ellos el layout
-> `.agents/` y el esquema de `workspace.json`.
->
-> Para el alcance y las decisiones vigentes, empieza por
-> [`docs/context/README.md`](./docs/context/README.md). Los agentes deben leer además
-> [`AGENTS.md`](./AGENTS.md) antes de modificar el repositorio.
->
-> Nota: el conteo de "51 skills" de este README está desactualizado — son 50
-> ([auditoría](./docs/context/06-legacy-baseline.md)).
+**Obtención e instalación de capacidades para agentes.** Una CLI en Go, sin dependencias
+externas, que descubre, planifica e instala skills, agentes, workflows y kits desde
+repositorios Git públicos y privados, de forma reproducible y auditable.
 
-**AI-first workspace bootstrapper.** Inicializa un workspace `.agents/` en cualquier proyecto con un catálogo curado de skills, packs, agentes y disciplinas de desarrollo. Cross-compatible **Claude Code** ↔ **OpenCode**.
+Compatible con **Claude Code**, **OpenCode** y cualquier runtime que lea `.agents/`.
 
 ## Instalación
 
-### Con `npx skills` (recomendado)
-
-```bash
-npx skills add LuchoC-Dev/agent-kits
+```powershell
+go build -o agent-kits.exe ./cmd/agent-kits
 ```
 
-### Manual
-
-Cloná y copiá la carpeta a tu directorio de skills:
-
-```bash
-git clone https://github.com/LuchoC-Dev/agent-kits.git
-# Claude Code:
-cp -r agent-kits ~/.claude/skills/kits-init
-# OpenCode:
-cp -r agent-kits ~/.config/opencode/skills/kits-init
-```
+El binario es estático y no requiere runtime instalado. La única dependencia externa es el
+`git` del sistema, y solo para sincronizar sources remotas.
 
 ## Uso
 
-Desde un proyecto cualquiera, invocá el comando:
-
+```powershell
+agent-kits source add public https://github.com/<owner>/<repo>.git
+agent-kits source sync public
+agent-kits search frontend
+agent-kits plan frontend-design --project .
+agent-kits install frontend-design --project . --yes
+agent-kits doctor --project .
 ```
-/kits-init
-```
 
-El agente te guía con preguntas para:
+Todo comando acepta `--json` y devuelve un envelope estable con códigos de error
+documentados, para que un agente pueda consumirlo sin parsear texto.
 
-1. Detectar el stack del proyecto (React, Node, Python, Java, etc.).
-2. Elegir packs (`context`, `design`, `backend-design`, `fullstack-design`, `backend`, `frontend`, `tools`).
-3. Elegir skills sueltas si querés custom.
-4. Activar disciplinas de desarrollo (`tdd`, `bdd`, `contract-first`, `trunk-based`, `sdd`).
+La referencia completa —comandos, contratos JSON, exit codes, política de conflictos y
+seguridad— está en [`docs/cli.md`](./docs/cli.md).
 
-Genera `.agents/` con `workspace.json`, skills, agentes y workflows listos para trabajar.
+## El catálogo
 
-## Qué hay adentro
+Este repositorio contiene **la herramienta**, no el contenido. El catálogo vive aparte,
+porque publicar es una operación sobre contenido y no sobre código (D-037):
 
-- **7 packs** — composiciones temáticas de skills+agentes+workflows.
-- **51 skills** — unidades de capacidad agnósticas al flujo (incluye ecosistema SDD).
-- **4 agentes globales** — `artifact-validator`, `design-critic`, `research-scout`, `wireframe-renderer`.
-- **5 disciplinas** combinables — TDD, BDD, contract-first, trunk-based, SDD.
-
-Ver el [índice del catálogo](./catalog-index.md) para la lista completa.
-
-## Runtimes soportados
-
-| Runtime | Tool de preguntas usada |
+| Repositorio | Contenido |
 |---|---|
-| **Claude Code** | `AskUserQuestion` (nativa) |
-| **OpenCode** | `question` (nativa) |
-| Otros | Chat plano numerado (fallback) |
+| `LuchoC-Dev/repository-private` | el catálogo completo: 75 recursos |
+| `LuchoC-Dev/repository` | el subconjunto publicado |
 
-La detección es automática en Fase 1 del agente.
+Nada nace público: un recurso se crea en el privado y llega al público sólo por una
+publicación explícita (D-038).
 
-## Estructura del workspace generado
+## Estructura instalada
 
-```
+```text
 .agents/
-├── workspace.json          ← runtime, packs, skills, agentes, disciplinas
-├── skills/<id>/SKILL.md    ← skills instaladas (solo las elegidas)
-├── agents/<id>.md          ← agentes orquestadores y de tarea
-├── workflows/<id>.md       ← workflows del/los pack(s) elegido(s)
-└── packs/<id>/pack.md      ← registro de los packs instalados
+├── agent-kits.lock.json    ← estado del proyecto: qué hay instalado, de dónde y con qué checksum
+├── skills/<id>/…
+├── agents/<id>.md
+├── workflows/<id>.md
+└── packs/<id>/pack.md
 ```
 
-## Documentación interna
+## Migrar desde `kits-init`
 
-Para entender la arquitectura, las decisiones de diseño y el glosario completo, ver [PROJECT-CONTEXT.md](./PROJECT-CONTEXT.md).
+La skill conversacional `/kits-init` está **retirada** (D-029): la CLI es la única
+superficie que evoluciona. Un workspace creado por ella se adopta una vez, sin pérdida de
+datos y dejando una copia de seguridad:
+
+```powershell
+agent-kits migrate --project .          # muestra el plan, no escribe
+agent-kits migrate --project . --yes    # lo aplica
+```
+
+El detalle está en [`docs/cli.md`](./docs/cli.md#migración-desde-kits-init).
+
+## Documentación
+
+| Documento | Contenido |
+|---|---|
+| [`docs/cli.md`](./docs/cli.md) | Comportamiento de la CLI: contratos, errores, seguridad. |
+| [`docs/context/`](./docs/context/README.md) | Decisiones, especificación y roadmap. |
+| [`AGENTS.md`](./AGENTS.md) | Lectura obligatoria para agentes que modifiquen el repositorio. |
+| [`PROJECT-CONTEXT.md`](./PROJECT-CONTEXT.md) | Historia del sistema `kits-init` que precedió a la CLI. |
+
+## Garantías
+
+- La CLI **nunca** ejecuta contenido del catálogo.
+- **Nunca** escribe en un remoto: `git` se invoca con una lista blanca de subcomandos de
+  solo lectura, verificable en `internal/git/git.go`.
+- No sobrescribe en silencio: un archivo modificado localmente bloquea la operación.
+- Toda escritura es journalizada y reversible: un fallo restaura el estado anterior.
 
 ## Licencia
 

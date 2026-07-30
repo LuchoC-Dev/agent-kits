@@ -68,25 +68,24 @@ func decode(t *testing.T, stdout string) envelope {
 func sampleCatalog() []internaltest.Resource {
 	return []internaltest.Resource{
 		{
-			ID: "problem-framing", Type: model.TypeSkill, Version: "1.0.0",
+			Name: "problem-framing", Type: model.TypeSkill, Version: "1.0.0",
 			Description: "Define the real problem",
 			Files:       map[string]string{"SKILL.md": "# framing\n"},
 		},
 		{
-			ID: "context/context-builder", Type: model.TypeAgent, Version: "1.0.0",
+			Name: "context-builder", Type: model.TypeAgent, Version: "1.0.0",
 			Files: map[string]string{"context-builder.md": "# builder\n"},
 		},
 		{
-			ID: "context", Type: model.TypeKit, Version: "1.0.0",
+			Name: "context", Type: model.TypeKit, Version: "1.0.0",
 			Description: "Context kit",
 			Files:       map[string]string{"pack.md": "# pack\n"},
 			Dependencies: []model.Dependency{
 				internaltest.Dep("problem-framing"),
-				internaltest.Dep("context/context-builder"),
+				internaltest.Dep("context-builder"),
 			},
 		},
-		{ID: "a/dup", Type: model.TypeWorkflow, Version: "1.0.0"},
-		{ID: "b/dup", Type: model.TypeWorkflow, Version: "1.0.0"},
+		{Name: "solo", Type: model.TypeWorkflow, Version: "1.0.0"},
 	}
 }
 
@@ -144,7 +143,7 @@ func TestSearchAndInfo(t *testing.T) {
 
 	found := decode(t, r.mustRun("search", "problem", "--json"))
 	results := found.Data.(map[string]any)["results"].([]any)
-	if len(results) != 1 || results[0].(map[string]any)["id"] != "problem-framing" {
+	if len(results) != 1 || results[0].(map[string]any)["name"] != "problem-framing" {
 		t.Fatalf("results = %v", results)
 	}
 
@@ -213,11 +212,14 @@ func TestInstallListRepeatAndRemove(t *testing.T) {
 		".agents/agents/context-builder.md",
 		".agents/packs/context/pack.md",
 		".agents/agent-kits.lock.json",
-		".agents/workspace.json",
 	} {
 		if !internaltest.Exists(r.project, path) {
 			t.Errorf("%s was not installed", path)
 		}
+	}
+	// No normal command creates workspace.json any more (D-030).
+	if internaltest.Exists(r.project, ".agents/workspace.json") {
+		t.Error("install created a second state file")
 	}
 
 	listed := decode(t, r.mustRun("list", "--project", r.project, "--json"))
@@ -248,7 +250,7 @@ func TestUpdatePicksUpNewVersions(t *testing.T) {
 
 	// Publish a new version of the installed skill.
 	internaltest.WriteNativeSource(t, r.sourceDir, internaltest.Resource{
-		ID: "problem-framing", Type: model.TypeSkill, Version: "1.1.0",
+		Name: "problem-framing", Type: model.TypeSkill, Version: "1.1.0",
 		Files: map[string]string{"SKILL.md": "# framing v2\n"},
 	})
 
@@ -285,11 +287,22 @@ func TestDoctorExitsNonZeroWithASingleEnvelope(t *testing.T) {
 	}
 }
 
+// D-036: a name two sources offer is ambiguous, and the CLI refuses to choose.
 func TestAmbiguousReferenceFailsClosed(t *testing.T) {
 	r := newRunner(t, sampleCatalog()...)
-	code, stdout, _ := r.run("plan", "dup", "--project", r.project, "--json")
+
+	// A second source offering the same name as the first.
+	other := t.TempDir()
+	internaltest.WriteNativeSource(t, other, internaltest.Resource{
+		Name: "problem-framing", ID: "3f1c2b7a-9d84-4e11-b6f2-77c1a9e0d512",
+		Type: model.TypeSkill, Version: "2.0.0",
+		Files: map[string]string{"SKILL.md": "# other framing\n"},
+	})
+	r.mustRun("source", "add", "acme", other, "--trust", "trusted")
+
+	code, stdout, _ := r.run("plan", "problem-framing", "--project", r.project, "--json")
 	if code != errs.ExitIntegrity {
-		t.Fatalf("exit = %d, want %d", code, errs.ExitIntegrity)
+		t.Fatalf("exit = %d, want %d\n%s", code, errs.ExitIntegrity, stdout)
 	}
 	result := decode(t, stdout)
 	if result.OK || result.Error.Code != errs.CodeAmbiguousID {
@@ -297,7 +310,16 @@ func TestAmbiguousReferenceFailsClosed(t *testing.T) {
 	}
 	candidates, ok := result.Error.Details["candidates"].([]any)
 	if !ok || len(candidates) != 2 {
-		t.Errorf("details = %+v", result.Error.Details)
+		t.Fatalf("details = %+v", result.Error.Details)
+	}
+	if candidates[0] != "acme:problem-framing" {
+		t.Errorf("candidates must be qualified by source: %v", candidates)
+	}
+
+	// Qualifying the reference resolves it.
+	resolved := decode(t, r.mustRun("plan", "acme:problem-framing", "--project", r.project, "--json"))
+	if !resolved.OK {
+		t.Fatalf("a qualified reference failed: %+v", resolved)
 	}
 }
 
@@ -336,6 +358,206 @@ func TestProjectMustExist(t *testing.T) {
 	r := newRunner(t, sampleCatalog()...)
 	if code, _, _ := r.run("plan", "context", "--project", r.project+"/missing"); code != errs.ExitUsage {
 		t.Error("a nonexistent project directory was accepted")
+	}
+}
+
+// legacyWorkspace is a project produced by the conversational kits-init flow: installed
+// content and a workspace.json, but no lockfile.
+const legacyWorkspace = `{
+  "$schema_version": 2,
+  "id": "3f1c2b7a-9d84-4e11-b6f2-77c1a9e0d512",
+  "created_at": "2026-05-22T10:00:00Z",
+  "updated_at": "2026-06-01T09:30:00Z",
+  "system_version": "0.1.0",
+  "runtime": "agents",
+  "pack": { "name": "context", "source": "packs/context", "installed_at": "2026-05-22T10:00:00Z" },
+  "stack": { "detected": ["go"], "source": "user-input", "confidence": "high" },
+  "skills": [{ "id": "problem-framing", "source": "skills/problem-framing", "installed_at": "2026-05-22T10:00:00Z" }],
+  "agents": [{ "id": "context-builder", "class": 1, "source": "packs/context/agents", "installed_at": "2026-05-22T10:00:00Z" }],
+  "disciplines": [],
+  "flags": { "initialized": true, "repaired_at": null, "upgraded_at": null },
+  "structure": ["agents", "packs", "skills"],
+  "custom_field": {"keep": true}
+}`
+
+func (r *runner) writeLegacyWorkspace() {
+	r.t.Helper()
+	internaltest.WriteFile(r.t, r.project, ".agents/skills/problem-framing/SKILL.md", "# framing\n")
+	internaltest.WriteFile(r.t, r.project, ".agents/agents/context-builder.md", "# builder\n")
+	internaltest.WriteFile(r.t, r.project, ".agents/packs/context/pack.md", "# pack\n")
+	internaltest.WriteFile(r.t, r.project, ".agents/workspace.json", legacyWorkspace)
+}
+
+// D-031: migrating shows a plan, needs approval, and then retires workspace.json.
+func TestMigrateAdoptsAnInheritedWorkspace(t *testing.T) {
+	r := newRunner(t, sampleCatalog()...)
+	r.writeLegacyWorkspace()
+
+	// Without --yes a non-interactive session must not write.
+	code, stdout, _ := r.run("migrate", "--project", r.project, "--json")
+	if code != errs.ExitConflict {
+		t.Fatalf("exit = %d, want %d\n%s", code, errs.ExitConflict, stdout)
+	}
+	if result := decode(t, stdout); result.OK || result.Error.Code != errs.CodeConfirmationRequired {
+		t.Fatalf("envelope = %+v", result)
+	}
+	if internaltest.Exists(r.project, ".agents/agent-kits.lock.json") {
+		t.Fatal("an unapproved migration wrote to the project")
+	}
+
+	applied := decode(t, r.mustRun("migrate", "--project", r.project, "--yes", "--json"))
+	data := applied.Data.(map[string]any)
+	if data["changed"] != true || data["origin"] != "workspace.json" {
+		t.Fatalf("migrate data = %+v", data)
+	}
+	if data["to_schema"].(float64) != float64(model.LockSchemaVersion) {
+		t.Errorf("to_schema = %v", data["to_schema"])
+	}
+	if internaltest.Exists(r.project, ".agents/workspace.json") {
+		t.Error("workspace.json was not retired")
+	}
+	if got := internaltest.ReadFile(t, r.project, ".agents/workspace.json.migrated.bak"); got != legacyWorkspace {
+		t.Error("the backup is not a byte-for-byte copy")
+	}
+
+	listed := decode(t, r.mustRun("list", "--project", r.project, "--json"))
+	if listed.Data.(map[string]any)["count"].(float64) != 3 {
+		t.Errorf("the migrated project should manage 3 resources: %+v", listed.Data)
+	}
+	// A migrated project is healthy: nothing is left half-owned.
+	diagnosis := decode(t, r.mustRun("doctor", "--project", r.project, "--json"))
+	if !diagnosis.OK {
+		t.Errorf("doctor after migrating = %+v", diagnosis)
+	}
+	// Installing the same kit afterwards is a no-op: the adoption was complete.
+	repeated := decode(t, r.mustRun("install", "context", "--project", r.project, "--yes", "--json"))
+	if repeated.Data.(map[string]any)["changed"] != false {
+		t.Errorf("a plan after migrating should be empty: %+v", repeated.Data)
+	}
+	// Migrating again changes nothing.
+	again := decode(t, r.mustRun("migrate", "--project", r.project, "--yes", "--json"))
+	if again.Data.(map[string]any)["changed"] != false {
+		t.Errorf("a repeated migration reported a change: %+v", again.Data)
+	}
+}
+
+// D-031: `import` is the deprecated spelling and shares the implementation.
+func TestImportIsADeprecatedAliasOfMigrate(t *testing.T) {
+	r := newRunner(t, sampleCatalog()...)
+	r.writeLegacyWorkspace()
+
+	code, stdout, stderr := r.run("import", "--project", r.project, "--yes")
+	if code != errs.ExitOK {
+		t.Fatalf("exit = %d\n%s\n%s", code, stdout, stderr)
+	}
+	if !strings.Contains(stderr, "deprecated") || !strings.Contains(stderr, "migrate") {
+		t.Errorf("the human output must announce the deprecation: %q", stderr)
+	}
+	if internaltest.Exists(r.project, ".agents/workspace.json") {
+		t.Error("import must migrate, not keep two state files alive")
+	}
+
+	// The JSON envelope keeps its shape and only adds the deprecation notice.
+	r2 := newRunner(t, sampleCatalog()...)
+	r2.writeLegacyWorkspace()
+	result := decode(t, r2.mustRun("import", "--project", r2.project, "--yes", "--json"))
+	if !result.OK || result.Command != "import" {
+		t.Fatalf("envelope = %+v", result)
+	}
+	data := result.Data.(map[string]any)
+	if data["operation"] != "migrate" || data["changed"] != true {
+		t.Errorf("import data = %+v", data)
+	}
+	notice, ok := data["deprecated"].(map[string]any)
+	if !ok || notice["replacement"] != "migrate" {
+		t.Errorf("deprecation notice = %+v", data["deprecated"])
+	}
+}
+
+// A migration never discards data to continue, so it has no --force.
+func TestMigrateRefusesForce(t *testing.T) {
+	r := newRunner(t, sampleCatalog()...)
+	r.writeLegacyWorkspace()
+	code, stdout, _ := r.run("migrate", "--project", r.project, "--yes", "--force", "--json")
+	if code != errs.ExitUsage {
+		t.Fatalf("exit = %d, want %d\n%s", code, errs.ExitUsage, stdout)
+	}
+	if internaltest.Exists(r.project, ".agents/agent-kits.lock.json") {
+		t.Error("a refused migration wrote to the project")
+	}
+}
+
+// A managed file that no longer matches the catalog blocks the migration entirely.
+func TestMigrateBlocksOnLocalDivergence(t *testing.T) {
+	r := newRunner(t, sampleCatalog()...)
+	r.writeLegacyWorkspace()
+	internaltest.WriteFile(t, r.project, ".agents/skills/problem-framing/SKILL.md", "edited\n")
+
+	code, stdout, _ := r.run("migrate", "--project", r.project, "--yes", "--json")
+	if code != errs.ExitConflict {
+		t.Fatalf("exit = %d, want %d\n%s", code, errs.ExitConflict, stdout)
+	}
+	result := decode(t, stdout)
+	if result.OK || result.Error.Code != errs.CodeLocalDivergence {
+		t.Fatalf("envelope = %+v", result)
+	}
+	if internaltest.Exists(r.project, ".agents/agent-kits.lock.json") {
+		t.Error("a blocked migration wrote a lockfile")
+	}
+	if !internaltest.Exists(r.project, ".agents/workspace.json") {
+		t.Error("a blocked migration retired workspace.json")
+	}
+}
+
+// D-030: while a project has two candidate sources of truth, nothing may change it.
+func TestMutatingCommandsRefuseAProjectPendingMigration(t *testing.T) {
+	r := newRunner(t, sampleCatalog()...)
+	r.writeLegacyWorkspace()
+
+	for _, args := range [][]string{
+		{"install", "context", "--project", r.project, "--yes", "--json"},
+		{"update", "--project", r.project, "--yes", "--json"},
+		{"remove", "context", "--project", r.project, "--yes", "--json"},
+	} {
+		code, stdout, _ := r.run(args...)
+		if code != errs.ExitConflict {
+			t.Fatalf("%v exited %d, want %d\n%s", args, code, errs.ExitConflict, stdout)
+		}
+		result := decode(t, stdout)
+		if result.OK || result.Error.Code != errs.CodeWorkspaceInvalid {
+			t.Fatalf("%v envelope = %+v", args, result)
+		}
+		if hint, _ := result.Error.Details["hint"].(string); !strings.Contains(hint, "migrate") {
+			t.Errorf("%v hint = %q, want it to point at migrate", args, hint)
+		}
+	}
+	if internaltest.Exists(r.project, ".agents/agent-kits.lock.json") {
+		t.Error("a blocked command wrote a lockfile")
+	}
+
+	// Read-only commands still work: a project pending migration must stay inspectable.
+	r.mustRun("plan", "context", "--project", r.project, "--json")
+	r.mustRun("list", "--project", r.project, "--json")
+
+	// doctor reports the pending migration with the existing vocabulary.
+	code, stdout, _ := r.run("doctor", "--project", r.project, "--json")
+	if code != errs.ExitConflict {
+		t.Fatalf("doctor exited %d\n%s", code, stdout)
+	}
+	if !strings.Contains(stdout, "migrate") {
+		t.Errorf("doctor should say what to do:\n%s", stdout)
+	}
+}
+
+// A project with nothing to migrate says so instead of inventing state.
+func TestMigrateOnAProjectWithoutState(t *testing.T) {
+	r := newRunner(t, sampleCatalog()...)
+	result := decode(t, r.mustRun("migrate", "--project", r.project, "--json"))
+	if !result.OK || result.Data.(map[string]any)["changed"] != false {
+		t.Fatalf("envelope = %+v", result)
+	}
+	if internaltest.Exists(r.project, ".agents") {
+		t.Error("migrate created files in an untouched project")
 	}
 }
 

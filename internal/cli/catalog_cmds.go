@@ -11,6 +11,7 @@ import (
 	"github.com/LuchoC-Dev/agent-kits/internal/git"
 	"github.com/LuchoC-Dev/agent-kits/internal/model"
 	"github.com/LuchoC-Dev/agent-kits/internal/source"
+	"github.com/LuchoC-Dev/agent-kits/internal/workspace"
 )
 
 // cmdVersion reports the build and the contracts a caller can rely on.
@@ -23,20 +24,23 @@ func (a *App) cmdVersion(args []string) error {
 		return err
 	}
 	data := map[string]any{
-		"version":          Version,
-		"manifest_schema":  model.ManifestSchemaVersion,
-		"lock_schema":      model.LockSchemaVersion,
-		"workspace_schema": 2,
-		"runtimes":         adapter.Names(),
-		"types":            model.Types(),
-		"error_codes":      errs.Codes(),
-		"git_subcommands":  git.AllowedSubcommands(),
-		"remote_writes":    false,
+		"version":         Version,
+		"manifest_schema": model.ManifestSchemaVersion,
+		"lock_schema":     model.LockSchemaVersion,
+		// The lockfile a previous build wrote is still readable; workspace.json is only an
+		// input to `migrate` and is never written (D-030).
+		"lock_schema_read":  []int{model.LockSchemaVersionLegacy, model.LockSchemaVersion},
+		"migrates_from":     map[string]any{"workspace.json": []int{1, workspace.SchemaVersion}},
+		"runtimes":          adapter.Names(),
+		"types":             model.Types(),
+		"error_codes":       errs.Codes(),
+		"git_subcommands":   git.AllowedSubcommands(),
+		"remote_writes":     false,
 	}
 	return a.succeed("version", data, func() {
 		fmt.Fprintf(a.Stdout, "agent-kits %s\n", Version)
-		fmt.Fprintf(a.Stdout, "  schemas    manifest v%d · lock v%d · workspace v2\n",
-			model.ManifestSchemaVersion, model.LockSchemaVersion)
+		fmt.Fprintf(a.Stdout, "  schemas    manifest v%d · lock v%d (reads v%d)\n",
+			model.ManifestSchemaVersion, model.LockSchemaVersion, model.LockSchemaVersionLegacy)
 		fmt.Fprintf(a.Stdout, "  runtimes   %s\n", strings.Join(adapter.Names(), ", "))
 		fmt.Fprintf(a.Stdout, "  types      %s\n", joinTypes(model.Types()))
 		fmt.Fprintf(a.Stdout, "  git        read-only (%s)\n",
@@ -141,6 +145,7 @@ func (a *App) sourceAdd(args []string) error {
 	access := set.String("access", string(model.AccessPublic), "public|private")
 	trust := set.String("trust", string(model.TrustReview), "trusted|review")
 	ref := set.String("ref", "", "branch or tag to track")
+	publishes := set.String("publishes", "", "name of the source this one publishes")
 	set.BoolVar(&opts.json, "json", false, "emit JSON")
 	operands, err := a.parse(set, args, opts)
 	if err != nil {
@@ -154,11 +159,12 @@ func (a *App) sourceAdd(args []string) error {
 		return err
 	}
 	src := source.Source{
-		Name:   operands[0],
-		URL:    operands[1],
-		Ref:    *ref,
-		Access: model.Access(*access),
-		Trust:  model.Trust(*trust),
+		Name:      operands[0],
+		URL:       operands[1],
+		Ref:       *ref,
+		Access:    model.Access(*access),
+		Trust:     model.Trust(*trust),
+		Publishes: *publishes,
 	}
 	if err := store.Add(src); err != nil {
 		return err
@@ -310,7 +316,7 @@ func (a *App) cmdSearch(args []string) error {
 		fmt.Fprintf(a.Stdout, "%d result(s)\n\n", len(matches))
 		table := newTable("ID", "TYPE", "VERSION", "SOURCE", "DESCRIPTION")
 		for _, res := range matches {
-			table.add(string(res.ID), string(res.Type), res.Version, res.Source,
+			table.add(res.Name, string(res.Type), res.Version, res.Source,
 				truncate(res.Description, 60))
 		}
 		table.render(a.Stdout)
@@ -366,7 +372,7 @@ func (a *App) cmdInfo(args []string) error {
 
 	dependencies := make([]string, 0, len(res.Dependencies))
 	for _, dep := range res.Dependencies {
-		label := string(dep.ID)
+		label := dep.Label()
 		if dep.Version != "" {
 			label += " " + dep.Version
 		}
@@ -376,7 +382,7 @@ func (a *App) cmdInfo(args []string) error {
 	for _, candidate := range cat.All() {
 		for _, dep := range candidate.Dependencies {
 			if dep.ID == res.ID {
-				dependents = append(dependents, string(candidate.ID))
+				dependents = append(dependents, candidate.Name)
 				break
 			}
 		}
@@ -386,14 +392,15 @@ func (a *App) cmdInfo(args []string) error {
 	data := map[string]any{
 		"id":           res.ID,
 		"type":         res.Type,
-		"name":         res.DisplayName(),
+		"name":         res.Name,
+		"title":        res.Title,
+		"qualified":    res.Qualified(),
 		"version":      res.Version,
 		"description":  res.Description,
 		"source":       res.Source,
 		"access":       res.Access,
 		"trust":        res.Trust,
 		"commit":       res.Commit,
-		"legacy":       res.Legacy,
 		"dependencies": dependencies,
 		"dependents":   dependents,
 		"files":        res.Files,
@@ -403,7 +410,9 @@ func (a *App) cmdInfo(args []string) error {
 		"consumes":     res.Consumes,
 	}
 	return a.succeed("info", data, func() {
-		fmt.Fprintf(a.Stdout, "%s · %s %s · source %s\n", res.ID, res.Type, res.Version, res.Source)
+		fmt.Fprintf(a.Stdout, "%s · %s %s · source %s\n",
+			res.Name, res.Type, res.Version, res.Source)
+		fmt.Fprintf(a.Stdout, "  id          %s\n", res.ID)
 		if res.Description != "" {
 			fmt.Fprintf(a.Stdout, "\n%s\n", wrap(res.Description, 88))
 		}

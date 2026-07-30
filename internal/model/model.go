@@ -4,6 +4,7 @@
 package model
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -16,8 +17,14 @@ import (
 // ManifestSchemaVersion is the current version of agent-kit.json.
 const ManifestSchemaVersion = 1
 
-// LockSchemaVersion is the current version of agent-kits.lock.json.
-const LockSchemaVersion = 1
+// LockSchemaVersion is the version of agent-kits.lock.json this build writes. Version 2
+// makes the lockfile the single source of truth of a project, absorbing the identity and
+// history that workspace.json used to hold (D-030).
+const LockSchemaVersion = 2
+
+// LockSchemaVersionLegacy is the older lockfile this build still reads. It is upgraded in
+// memory on load, so every write produces LockSchemaVersion.
+const LockSchemaVersionLegacy = 1
 
 // ManifestFilename is the per-resource manifest recognised in native source layouts.
 const ManifestFilename = "agent-kit.json"
@@ -61,9 +68,15 @@ const (
 	TrustReview  Trust = "review"
 )
 
-// Dependency is a requirement on another canonical resource.
+// Dependency is a requirement on another resource, addressed by identity.
+//
+// Name is informative: a list of UUIDs is unreadable, so a manifest may record the name a
+// dependency had when it was written. The catalog verifies it against the resolved
+// resource, which turns a stale copy into a reported inconsistency instead of a silent
+// lie. Resolution never uses it.
 type Dependency struct {
 	ID      ID     `json:"id"`
+	Name    string `json:"name,omitempty"`
 	Version string `json:"version,omitempty"`
 }
 
@@ -72,8 +85,8 @@ func (d Dependency) Constraint() (semver.Constraint, error) {
 	return semver.ParseConstraint(d.Version)
 }
 
-// UnmarshalJSON accepts both the shorthand and the explicit form, so that
-// `"tdd"` and `{"id":"tdd","version":"^0.1.0"}` are both valid.
+// UnmarshalJSON accepts the shorthand `"<uuid>"` and the explicit form
+// `{"id":"<uuid>","name":"tdd","version":"^1.0.0"}`.
 func (d *Dependency) UnmarshalJSON(data []byte) error {
 	trimmed := strings.TrimSpace(string(data))
 	if strings.HasPrefix(trimmed, `"`) {
@@ -85,11 +98,12 @@ func (d *Dependency) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
-		d.ID, d.Version = id, ""
+		d.ID, d.Name, d.Version = id, "", ""
 		return nil
 	}
 	var alias struct {
 		ID      string `json:"id"`
+		Name    string `json:"name"`
 		Version string `json:"version"`
 	}
 	if err := json.Unmarshal(data, &alias); err != nil {
@@ -99,7 +113,7 @@ func (d *Dependency) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	d.ID, d.Version = id, alias.Version
+	d.ID, d.Name, d.Version = id, alias.Name, alias.Version
 	return nil
 }
 
@@ -114,15 +128,20 @@ type Artifact struct {
 
 // Manifest is the declarative description of one resource.
 type Manifest struct {
-	SchemaVersion int             `json:"schema_version"`
-	ID            ID              `json:"id"`
-	Type          Type            `json:"type"`
-	Name          string          `json:"name,omitempty"`
-	Version       string          `json:"version"`
-	Description   string          `json:"description,omitempty"`
-	Dependencies  []Dependency    `json:"dependencies,omitempty"`
-	Files         []string        `json:"files,omitempty"`
-	Traits        map[string]bool `json:"traits,omitempty"`
+	SchemaVersion int `json:"schema_version"`
+	// ID is the resource's identity and never changes (D-035).
+	ID   ID   `json:"id"`
+	Type Type `json:"type"`
+	// Name is the install name: what a caller types and where the resource lands on disk.
+	// It is unique within a source and may be changed by its author (D-036).
+	Name string `json:"name"`
+	// Title is the human label. It is presentation only.
+	Title           string          `json:"title,omitempty"`
+	Version         string          `json:"version"`
+	Description     string          `json:"description,omitempty"`
+	Dependencies    []Dependency    `json:"dependencies,omitempty"`
+	Files           []string        `json:"files,omitempty"`
+	Traits          map[string]bool `json:"traits,omitempty"`
 	// Labels carries free-form metadata preserved from the source, such as the legacy
 	// catalog's class, invocation and license fields. It is informational: no resolution
 	// or installation decision reads it.
@@ -143,33 +162,36 @@ func (m *Manifest) Validate() error {
 			m.SchemaVersion, ManifestSchemaVersion)
 	}
 	if _, err := ParseID(string(m.ID)); err != nil {
-		return err
+		return errs.Wrap(errs.CodeInvalidManifest, err, "resource %q has no valid id", m.Name)
+	}
+	if _, err := ParseName(m.Name); err != nil {
+		return errs.Wrap(errs.CodeInvalidManifest, err, "resource %s has no valid name", m.ID.Short())
 	}
 	if !m.Type.Valid() {
 		return errs.New(errs.CodeInvalidManifest,
-			"resource %s declares unsupported type %q", m.ID, m.Type)
+			"resource %s declares unsupported type %q", m.Name, m.Type)
 	}
 	if _, err := semver.Parse(m.Version); err != nil {
 		return errs.Wrap(errs.CodeInvalidManifest, err,
-			"resource %s declares an invalid version", m.ID)
+			"resource %s declares an invalid version", m.Name)
 	}
 	seen := map[ID]bool{}
 	for _, dep := range m.Dependencies {
 		if dep.ID == m.ID {
-			return errs.New(errs.CodeInvalidManifest, "resource %s depends on itself", m.ID)
+			return errs.New(errs.CodeInvalidManifest, "resource %s depends on itself", m.Name)
 		}
 		if seen[dep.ID] {
 			return errs.New(errs.CodeInvalidManifest,
-				"resource %s declares dependency %s twice", m.ID, dep.ID)
+				"resource %s declares dependency %s twice", m.Name, dep.Label())
 		}
 		seen[dep.ID] = true
 		if _, err := dep.Constraint(); err != nil {
 			return errs.Wrap(errs.CodeInvalidManifest, err,
-				"resource %s declares an invalid constraint for %s", m.ID, dep.ID)
+				"resource %s declares an invalid constraint for %s", m.Name, dep.Label())
 		}
 	}
 	if len(m.Files) == 0 {
-		return errs.New(errs.CodeInvalidManifest, "resource %s declares no files", m.ID)
+		return errs.New(errs.CodeInvalidManifest, "resource %s declares no files", m.Name)
 	}
 	return nil
 }
@@ -183,12 +205,12 @@ func (m *Manifest) SemVersion() semver.Version {
 	return v
 }
 
-// DisplayName returns Name when present, falling back to the id.
+// DisplayName returns the human label when there is one, falling back to the install name.
 func (m *Manifest) DisplayName() string {
-	if m.Name != "" {
-		return m.Name
+	if m.Title != "" {
+		return m.Title
 	}
-	return string(m.ID)
+	return m.Name
 }
 
 // SupportsRuntime reports whether the resource declares compatibility with runtime.
@@ -218,12 +240,23 @@ type Resource struct {
 	// Access and Trust are inherited from the source.
 	Access Access `json:"access,omitempty"`
 	Trust  Trust  `json:"trust,omitempty"`
-	// Legacy marks resources synthesised from the inherited Markdown catalog (D-026).
-	Legacy bool `json:"legacy,omitempty"`
 }
 
 // Ref is a short human label used in messages and plan output.
-func (r *Resource) Ref() string { return fmt.Sprintf("%s (%s %s)", r.ID, r.Type, r.Version) }
+func (r *Resource) Ref() string { return fmt.Sprintf("%s (%s %s)", r.Name, r.Type, r.Version) }
+
+// Qualified renders the resource as `<source>:<name>`, which always identifies it
+// unambiguously among the configured sources.
+func (r *Resource) Qualified() string { return Qualify(r.Source, r.Name) }
+
+// Label renders a dependency for a message: its recorded name when it has one, and the
+// abbreviated identity otherwise.
+func (d Dependency) Label() string {
+	if d.Name != "" {
+		return d.Name
+	}
+	return d.ID.Short()
+}
 
 // FileAction classifies what installing a file would do to the project.
 type FileAction string
@@ -266,6 +299,7 @@ type FileChange struct {
 // PlanResource summarises one resolved resource inside a plan.
 type PlanResource struct {
 	ID        ID     `json:"id"`
+	Name      string `json:"name"`
 	Type      Type   `json:"type"`
 	Version   string `json:"version"`
 	Source    string `json:"source"`
@@ -292,9 +326,8 @@ type Plan struct {
 	Requested []string       `json:"requested,omitempty"`
 	Resources []PlanResource `json:"resources"`
 	Changes   []FileChange   `json:"changes"`
-	// Metadata lists the bookkeeping files the operation rewrites — the lockfile and
-	// workspace.json. They are tracked separately so they never make an otherwise
-	// idempotent plan look non-empty.
+	// Metadata lists the bookkeeping files the operation rewrites. They are tracked
+	// separately so they never make an otherwise idempotent plan look non-empty.
 	Metadata []FileChange `json:"metadata,omitempty"`
 	Warnings []Diagnostic `json:"warnings,omitempty"`
 	Blockers []Diagnostic `json:"blockers,omitempty"`
@@ -326,9 +359,14 @@ func (p *Plan) Counts() map[FileAction]int {
 
 // Sort orders resources and changes so that the same state always produces the same plan.
 func (p *Plan) Sort() {
+	// Ordering is by name, not identity: a plan is read by a person, and a UUID order is
+	// arbitrary to them. The identity breaks ties so the order stays deterministic.
 	sort.SliceStable(p.Resources, func(i, j int) bool {
 		if p.Resources[i].Type != p.Resources[j].Type {
 			return typeRank(p.Resources[i].Type) < typeRank(p.Resources[j].Type)
+		}
+		if p.Resources[i].Name != p.Resources[j].Name {
+			return p.Resources[i].Name < p.Resources[j].Name
 		}
 		return p.Resources[i].ID < p.Resources[j].ID
 	})
@@ -366,22 +404,76 @@ type LockFile struct {
 
 // LockResource records one installed resource and its provenance (RF-09).
 type LockResource struct {
-	ID        ID         `json:"id"`
-	Type      Type       `json:"type"`
-	Source    string     `json:"source"`
-	Version   string     `json:"version"`
-	Commit    string     `json:"commit,omitempty"`
-	Checksum  string     `json:"checksum"`
-	Requested bool       `json:"requested"`
-	Files     []LockFile `json:"files"`
+	// ID is the identity: it survives a rename, a change of kit and a publication.
+	ID ID `json:"id"`
+	// Name is the install name the resource had when it was installed. It is what the
+	// project shows and what a caller types; a later rename in the catalog shows up as a
+	// difference here, not as a different resource.
+	Name      string `json:"name"`
+	Type      Type   `json:"type"`
+	Source    string `json:"source"`
+	Version   string `json:"version"`
+	Commit    string `json:"commit,omitempty"`
+	Checksum  string `json:"checksum"`
+	Requested bool   `json:"requested"`
+	// InstalledAt preserves when the resource entered the project. A migration carries the
+	// inherited timestamp over, so adopting a workspace does not rewrite its history.
+	InstalledAt string     `json:"installed_at,omitempty"`
+	Files       []LockFile `json:"files"`
 }
 
-// Lock is the reproducible record of what a workspace has installed.
+// LockStack is the project's detected technology stack.
+type LockStack struct {
+	Detected   []string `json:"detected"`
+	Source     string   `json:"source"`
+	Confidence string   `json:"confidence"`
+}
+
+// LockProject is the stable identity of the project the lockfile describes.
+//
+// ID and CreatedAt never change once written: they survive migrations, updates and
+// removals, so a project keeps one identity for its whole life (07-cli-only-transition
+// -plan.md §4).
+type LockProject struct {
+	ID        string     `json:"id"`
+	CreatedAt string     `json:"created_at"`
+	Stack     *LockStack `json:"stack,omitempty"`
+	// Disciplines is explicit rather than derived: it can affect behaviour, so a migration
+	// preserves it instead of recomputing it.
+	Disciplines []string `json:"disciplines,omitempty"`
+}
+
+// LockMigration records that this lockfile absorbed an inherited workspace.json.
+//
+// It exists so nothing is lost: every field the old descriptor carried is either mapped to
+// an operational field of the lock or preserved here verbatim, including fields no version
+// of Agent Kits ever wrote (D-031).
+type LockMigration struct {
+	Source              string `json:"source"`
+	SourceSchemaVersion int    `json:"source_schema_version,omitempty"`
+	MigratedAt          string `json:"migrated_at"`
+	LegacyUpdatedAt     string `json:"legacy_updated_at,omitempty"`
+	LegacySystemVersion string `json:"legacy_system_version,omitempty"`
+	// Legacy* fields keep the inherited values as raw JSON, so a field this build does not
+	// understand is still preserved byte for byte.
+	LegacyPack      json.RawMessage `json:"legacy_pack,omitempty"`
+	LegacyFlags     json.RawMessage `json:"legacy_flags,omitempty"`
+	LegacyStructure []string        `json:"legacy_structure,omitempty"`
+	// Extra holds the fields of workspace.json this build does not manage at all.
+	Extra map[string]json.RawMessage `json:"extra,omitempty"`
+	// Backup is the project-relative path of the byte-for-byte copy of workspace.json.
+	Backup string `json:"backup,omitempty"`
+}
+
+// Lock is the reproducible record of what a project has installed, and — from schema
+// version 2 on — the only state file Agent Kits owns (D-030).
 type Lock struct {
 	SchemaVersion int            `json:"schema_version"`
+	Project       *LockProject   `json:"project,omitempty"`
 	Runtime       string         `json:"runtime"`
 	GeneratedAt   string         `json:"generated_at"`
 	Resources     []LockResource `json:"resources"`
+	Migration     *LockMigration `json:"migration,omitempty"`
 }
 
 // NewLock returns an empty lock for a runtime.
@@ -389,12 +481,14 @@ func NewLock(runtime string) *Lock {
 	return &Lock{SchemaVersion: LockSchemaVersion, Runtime: runtime, Resources: []LockResource{}}
 }
 
-// Validate checks a lock read from disk.
+// Validate checks a lock read from disk. Both the current and the legacy schema are
+// accepted, because a project written by an earlier build must remain readable; Upgrade
+// converts the legacy shape before anything is written back.
 func (l *Lock) Validate() error {
-	if l.SchemaVersion != LockSchemaVersion {
+	if l.SchemaVersion != LockSchemaVersion && l.SchemaVersion != LockSchemaVersionLegacy {
 		return errs.New(errs.CodeWorkspaceInvalid,
-			"unsupported lockfile schema_version %d (expected %d)",
-			l.SchemaVersion, LockSchemaVersion)
+			"unsupported lockfile schema_version %d (expected %d or %d)",
+			l.SchemaVersion, LockSchemaVersionLegacy, LockSchemaVersion)
 	}
 	seen := map[ID]bool{}
 	for _, r := range l.Resources {
@@ -403,7 +497,48 @@ func (l *Lock) Validate() error {
 		}
 		seen[r.ID] = true
 	}
+	if l.Project != nil && l.Project.ID == "" {
+		return errs.New(errs.CodeWorkspaceInvalid, "lockfile declares a project without an id")
+	}
 	return nil
+}
+
+// Legacy reports whether the lock was read in the superseded schema.
+func (l *Lock) Legacy() bool { return l.SchemaVersion == LockSchemaVersionLegacy }
+
+// Upgrade converts a legacy lock to the current schema in memory.
+//
+// The conversion is deterministic and adds nothing: a v1 lock carries no project identity,
+// so the upgraded lock has none either. Assigning one is an operation's job, not the
+// reader's, which keeps reading a lockfile free of side effects.
+func (l *Lock) Upgrade() {
+	if l.SchemaVersion == LockSchemaVersionLegacy {
+		l.SchemaVersion = LockSchemaVersion
+	}
+	if l.Resources == nil {
+		l.Resources = []LockResource{}
+	}
+}
+
+// EnsureProject assigns the project identity when the lock does not have one yet, and
+// returns it. An existing identity is never replaced.
+func (l *Lock) EnsureProject(id string, createdAt string) *LockProject {
+	if l.Project == nil {
+		l.Project = &LockProject{ID: id, CreatedAt: createdAt}
+	}
+	return l.Project
+}
+
+// Proposal returns a lock that keeps this one's identity, migration record and runtime but
+// carries no resources. Planning builds on it so an install never drops project state.
+func (l *Lock) Proposal(runtime string) *Lock {
+	out := NewLock(runtime)
+	if l == nil {
+		return out
+	}
+	out.Project = cloneProject(l.Project)
+	out.Migration = cloneMigration(l.Migration)
+	return out
 }
 
 // Find returns the recorded resource with the given id.
@@ -437,7 +572,28 @@ func (l *Lock) Upsert(r LockResource) {
 		}
 	}
 	l.Resources = append(l.Resources, r)
-	sort.SliceStable(l.Resources, func(i, j int) bool { return l.Resources[i].ID < l.Resources[j].ID })
+	l.sort()
+}
+
+// sort keeps the lockfile ordered by name, so a diff between two lockfiles reads like a
+// diff of what the project has rather than of opaque identities.
+func (l *Lock) sort() {
+	sort.SliceStable(l.Resources, func(i, j int) bool {
+		if l.Resources[i].Name != l.Resources[j].Name {
+			return l.Resources[i].Name < l.Resources[j].Name
+		}
+		return l.Resources[i].ID < l.Resources[j].ID
+	})
+}
+
+// FindByName returns the recorded resource installed under a name.
+func (l *Lock) FindByName(name string) (LockResource, bool) {
+	for _, r := range l.Resources {
+		if r.Name == name {
+			return r, true
+		}
+	}
+	return LockResource{}, false
 }
 
 // Delete drops a resource record and reports whether it existed.
@@ -456,9 +612,11 @@ func (l *Lock) Delete(id ID) bool {
 func (l *Lock) Clone() *Lock {
 	out := &Lock{
 		SchemaVersion: l.SchemaVersion,
+		Project:       cloneProject(l.Project),
 		Runtime:       l.Runtime,
 		GeneratedAt:   l.GeneratedAt,
 		Resources:     make([]LockResource, len(l.Resources)),
+		Migration:     cloneMigration(l.Migration),
 	}
 	for i, r := range l.Resources {
 		copied := r
@@ -467,6 +625,58 @@ func (l *Lock) Clone() *Lock {
 		out.Resources[i] = copied
 	}
 	return out
+}
+
+func cloneProject(in *LockProject) *LockProject {
+	if in == nil {
+		return nil
+	}
+	out := *in
+	if in.Stack != nil {
+		stack := *in.Stack
+		stack.Detected = append([]string(nil), in.Stack.Detected...)
+		out.Stack = &stack
+	}
+	out.Disciplines = append([]string(nil), in.Disciplines...)
+	return &out
+}
+
+func cloneMigration(in *LockMigration) *LockMigration {
+	if in == nil {
+		return nil
+	}
+	out := *in
+	out.LegacyPack = append(json.RawMessage(nil), in.LegacyPack...)
+	out.LegacyFlags = append(json.RawMessage(nil), in.LegacyFlags...)
+	out.LegacyStructure = append([]string(nil), in.LegacyStructure...)
+	if in.Extra != nil {
+		out.Extra = make(map[string]json.RawMessage, len(in.Extra))
+		for key, value := range in.Extra {
+			out.Extra[key] = append(json.RawMessage(nil), value...)
+		}
+	}
+	return &out
+}
+
+// NewProjectID generates the random identifier of a project, in the UUID v4 form the
+// inherited workspace.json used, so a migrated project can keep the id it already had.
+func NewProjectID() (string, error) {
+	id, err := newUUID()
+	if err != nil {
+		return "", errs.Wrap(errs.CodeInternal, err, "cannot generate a project id")
+	}
+	return id, nil
+}
+
+// newUUID generates a version 4 UUID. It is the identity of both a project and a resource.
+func newUUID() (string, error) {
+	var buf [16]byte
+	if _, err := rand.Read(buf[:]); err != nil {
+		return "", err
+	}
+	buf[6] = (buf[6] & 0x0f) | 0x40 // version 4
+	buf[8] = (buf[8] & 0x3f) | 0x80 // variant 10
+	return fmt.Sprintf("%x-%x-%x-%x-%x", buf[0:4], buf[4:6], buf[6:8], buf[8:10], buf[10:16]), nil
 }
 
 // RequestedIDs lists the resources the user asked for explicitly.
