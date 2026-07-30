@@ -1,6 +1,6 @@
 # Especificación y plan — transición a CLI única
 
-**Estado:** Fases A–F completadas (2026-07-30) — resta T19 (source privada real) y el cierre T20
+**Estado:** Completado (2026-07-30). El plan se cumplió; la evolución sigue en D-035 a D-039.
 **Fecha:** 2026-07-30
 **Decisiones:** D-029 a D-033
 
@@ -546,7 +546,7 @@ Cada tarea debe caber en una sesión y tocar, como regla, no más de cinco archi
   - Files: `SKILL.md`, `repair-upgrade.md`, `workspace-schema.md`, `README.md`,
     `PROJECT-CONTEXT.md`.
 
-- [ ] T19 — Verificar source privada
+- [x] T19 — Verificar source privada
   - Acceptance: autorizada sincroniza; no autorizada no filtra y devuelve error estable.
   - Verify: integración documentada sin credenciales en logs o fixtures.
   - Files: `internal/source/source_test.go`, fixture/config segura y roadmap.
@@ -585,7 +585,7 @@ Secuencial:
 - [x] Todos los recursos finales usan `agent-kit.json`.
 - [x] Loader legacy y frontmatter se eliminan cuando quedan sin consumidores.
 - [x] La CLI conserva los cuatro tipos.
-- [ ] Sources Git públicas y privadas mantienen sus garantías. *(privada: pendiente T19)*
+- [x] Sources Git públicas y privadas mantienen sus garantías.
 - [x] No existe operación de escritura remota.
 - [x] `go test ./...`, `go build ./...` y `git diff --check` pasan.
 - [ ] Git contiene solo cambios intencionales revisados.

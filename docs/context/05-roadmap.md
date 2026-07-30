@@ -24,7 +24,7 @@ Este roadmap describe puertas de validación.
 | 3 — Núcleo de catálogo y resolución | ✅ | `internal/catalog`, `internal/resolve` |
 | 4 — Planificador | ✅ | `internal/plan`, plan determinístico y reproducible |
 | 5 — Instalación segura | ✅ | `internal/install`, lockfile, rollback, remove, doctor |
-| 6 — Sources remotas y privacidad | ⚠️ parcial | cache, sync y reglas de visibilidad implementadas; sin probar contra un remoto privado real |
+| 6 — Sources remotas y privacidad | ✅ | verificada el 2026-07-30 contra `LuchoC-Dev/repository-private`: una identidad autorizada sincroniza; una sin permisos recibe `source_unavailable` y no descubre nada |
 | 7 — Adaptadores | ✅ | `agents`, `claude-code`, `opencode` (D-021) |
 | 8 — Compatibilidad y adopción | ✅ | adopción de workspaces heredados; hoy vía `migrate` (D-031) |
 
