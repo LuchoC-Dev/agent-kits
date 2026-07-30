@@ -542,6 +542,22 @@ arrastrado, para que aprobarlo sea una decisión informada y no un trámite.
 Antes de abrir el PR, CI ejecuta el escaneo de secretos sobre el contenido a publicar. Un
 match de alta confianza cancela la publicación.
 
+**Credencial y capas de contención** (configuradas el 2026-07-30):
+
+| Capa | Qué impide |
+|---|---|
+| el token sólo alcanza `repository`, nunca el privado | que una filtración exponga el catálogo privado |
+| vive como secret en el repositorio privado | que se lea desde afuera |
+| `main` del público está protegida con `enforce_admins` | que una credencial publique sin revisión, incluso siendo del dueño |
+| el token no tiene permiso de *Administration* | que pueda desactivar esa protección |
+| el PR enumera el cierre completo | que se publique una dependencia privada sin verla |
+
+La tercera capa es la que hace que la primera no tenga que ser perfecta: el token actúa
+con la identidad de su dueño, que es administrador, así que sin `enforce_admins` podría
+empujar directo a `main` y saltarse el pull request. Con él activado no puede, y como
+carece de permiso de administración tampoco puede desactivarlo. Sólo una persona, desde la
+interfaz, puede hacerlo.
+
 ## Decisiones todavía necesarias
 
 - ubicación definitiva del registro global de reserva de IDs para sources remotas
