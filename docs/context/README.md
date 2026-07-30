@@ -31,6 +31,7 @@ aisladas o revirtiendo decisiones históricas sin advertirlo.
 | `05-roadmap.md` | Fases, entregables, dependencias y puertas de validación. |
 | `06-legacy-baseline.md` | Estado comprobado del repositorio heredado y elementos reutilizables. |
 | `07-cli-only-transition-plan.md` | Especificación, migración y tareas para la transición a CLI única. |
+| `08-handoff.md` | **Empezá acá.** Estado actual, qué falta, invariantes y trampas. |
 
 ## Orden de precedencia
 
@@ -40,37 +41,31 @@ Cuando haya contradicciones:
 2. Especificación vigente en `04-specification.md`.
 3. Dirección de arquitectura en `02-architecture-direction.md`.
 4. Contexto de producto en `01-product-context.md`.
-5. Documentación heredada (`PROJECT-CONTEXT.md`, `README.md`, `SKILL.md`).
+5. Documentación heredada (`PROJECT-CONTEXT.md`), que es histórica.
 
-La documentación heredada sigue siendo autoritativa para describir el comportamiento
-actual, pero no decide automáticamente el diseño de la nueva versión.
+`docs/cli.md` describe el comportamiento real y tiene precedencia sobre cualquier
+documento de esta carpeta cuando difieran: acá vive la intención, allá lo que la CLI hace.
 
 ## Estado de madurez
 
-**Actualizado el 2026-07-30.** El MVP original está implementado y verificado. La
-compatibilidad obligatoria con `kits-init` fue reemplazada por una transición a CLI única
-(D-029 a D-033), planificada en `07-cli-only-transition-plan.md`.
+**Actualizado el 2026-07-30.** El MVP original y la transición a CLI única están
+completos. Agent Kits es hoy una CLI, con el catálogo en repositorios propios y una
+publicación privado → público por CI.
 
-De esa transición ya están implementadas y verificadas las fases A–F: lockfile v2 como
-única fuente de verdad, `agent-kits migrate`, `import` como alias deprecado, una CLI que no
-escribe ni depende de `workspace.json`, y un catálogo enteramente nativo de 75 recursos
-(D-034) que permitió eliminar el loader heredado y el parser de frontmatter.
-
-La superficie activa `/kits-init` se retiró el 2026-07-30: `SKILL.md`, `repair-upgrade.md`
-y `workspace-schema.md` ya no existen, y `README.md` documenta la CLI. `PROJECT-CONTEXT.md`
-se conserva marcado como historia.
-
-Queda pendiente T19, la verificación contra una source privada real.
+Para el estado operativo, lo que falta y las trampas conocidas, leé
+[`08-handoff.md`](./08-handoff.md). Esta sección sólo registra la madurez de los
+documentos.
 
 | Documento | Estado |
 |---|---|
 | `01-product-context.md` | Draft — sigue siendo la referencia de intención |
 | `02-architecture-direction.md` | Implementado, con las preguntas abiertas resueltas en `§13` |
-| `03-decisions.md` | Active — D-001 a D-033 |
+| `03-decisions.md` | Active — D-001 a D-041 |
 | `04-specification.md` | Implementado y verificado |
-| `05-roadmap.md` | Fases 0–8 completadas (la 6, parcial) |
+| `05-roadmap.md` | Fases 0–8 completadas |
 | `06-legacy-baseline.md` | Auditoría completada en `§8` |
-| `07-cli-only-transition-plan.md` | Fases A–D implementadas — E–G bloqueadas por el gate |
+| `07-cli-only-transition-plan.md` | Completado |
+| `08-handoff.md` | Active — el punto de entrada |
 
 El contrato de la CLI implementada vive en [`../cli.md`](../cli.md), fuera de esta carpeta:
 `docs/context/` describe intención y decisiones, `docs/cli.md` describe comportamiento.

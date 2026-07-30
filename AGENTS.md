@@ -27,6 +27,7 @@ go test ./...
 
 Antes de proponer o realizar cambios, lee en este orden:
 
+0. `docs/context/08-handoff.md` — estado actual, pendientes, invariantes y trampas
 1. `docs/context/README.md`
 2. `docs/context/01-product-context.md`
 3. `docs/context/02-architecture-direction.md`
