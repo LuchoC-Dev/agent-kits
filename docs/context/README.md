@@ -24,6 +24,7 @@ aisladas o revirtiendo decisiones históricas sin advertirlo.
 
 | Documento | Contenido |
 |---|---|
+| `00-overview.md` | **Empezá acá.** Qué es el proyecto, cómo funciona y por qué. |
 | `01-product-context.md` | Problema, usuarios, propuesta de valor, alcance y glosario. |
 | `02-architecture-direction.md` | Componentes previstos, flujos, invariantes y relación con el legado. |
 | `03-decisions.md` | Registro de decisiones tomadas y su justificación. |
@@ -31,7 +32,7 @@ aisladas o revirtiendo decisiones históricas sin advertirlo.
 | `05-roadmap.md` | Fases, entregables, dependencias y puertas de validación. |
 | `06-legacy-baseline.md` | Estado comprobado del repositorio heredado y elementos reutilizables. |
 | `07-cli-only-transition-plan.md` | Especificación, migración y tareas para la transición a CLI única. |
-| `08-handoff.md` | **Empezá acá.** Estado actual, qué falta, invariantes y trampas. |
+| `08-handoff.md` | Estado actual, qué falta, invariantes y trampas. Leelo antes de cambiar algo. |
 
 ## Orden de precedencia
 
@@ -58,14 +59,15 @@ documentos.
 
 | Documento | Estado |
 |---|---|
-| `01-product-context.md` | Draft — sigue siendo la referencia de intención |
+| `00-overview.md` | Active — la puerta de entrada |
+| `01-product-context.md` | Histórico — la intención previa a implementar |
 | `02-architecture-direction.md` | Implementado, con las preguntas abiertas resueltas en `§13` |
 | `03-decisions.md` | Active — D-001 a D-041 |
 | `04-specification.md` | Implementado y verificado |
-| `05-roadmap.md` | Fases 0–8 completadas |
-| `06-legacy-baseline.md` | Auditoría completada en `§8` |
-| `07-cli-only-transition-plan.md` | Completado |
-| `08-handoff.md` | Active — el punto de entrada |
+| `05-roadmap.md` | Histórico — fases del MVP, todas cerradas |
+| `06-legacy-baseline.md` | Histórico — auditoría del sistema anterior |
+| `07-cli-only-transition-plan.md` | Histórico — la transición, completada |
+| `08-handoff.md` | Active — estado operativo |
 
 El contrato de la CLI implementada vive en [`../cli.md`](../cli.md), fuera de esta carpeta:
 `docs/context/` describe intención y decisiones, `docs/cli.md` describe comportamiento.

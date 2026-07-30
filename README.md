@@ -74,7 +74,8 @@ El detalle está en [`docs/cli.md`](./docs/cli.md#migración-desde-kits-init).
 | Documento | Contenido |
 |---|---|
 | [`docs/cli.md`](./docs/cli.md) | Comportamiento de la CLI: contratos, errores, seguridad. |
-| [`docs/context/`](./docs/context/README.md) | Decisiones, especificación y roadmap. |
+| [`docs/context/00-overview.md`](./docs/context/00-overview.md) | **De qué se trata el proyecto.** Empezá acá. |
+| [`docs/context/`](./docs/context/README.md) | Decisiones, especificación e historia. |
 | [`AGENTS.md`](./AGENTS.md) | Lectura obligatoria para agentes que modifiquen el repositorio. |
 | [`PROJECT-CONTEXT.md`](./PROJECT-CONTEXT.md) | Historia del sistema `kits-init` que precedió a la CLI. |
 

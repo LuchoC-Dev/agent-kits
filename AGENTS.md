@@ -25,20 +25,23 @@ go test ./...
 
 ## Lectura obligatoria
 
-Antes de proponer o realizar cambios, lee en este orden:
+Dos documentos, en este orden:
 
-0. `docs/context/08-handoff.md` — estado actual, pendientes, invariantes y trampas
-1. `docs/context/README.md`
-2. `docs/context/01-product-context.md`
-3. `docs/context/02-architecture-direction.md`
-4. `docs/context/03-decisions.md`
-5. `docs/context/04-specification.md`
-6. `docs/context/05-roadmap.md`
-7. `docs/context/06-legacy-baseline.md`
+1. **`docs/context/00-overview.md`** — qué es el proyecto, cómo funciona y por qué está
+   hecho así. Es la puerta de entrada y se lee entero.
+2. **`docs/context/08-handoff.md`** — el estado operativo: qué falta, qué invariantes no se
+   pueden romper y qué trampas cuestan tiempo.
 
-Después `docs/cli.md` para el contrato implementado, y `PROJECT-CONTEXT.md` para el sistema
-heredado. Cuando el contexto heredado contradiga los documentos de `docs/context/`,
-prevalece `docs/context/` para la nueva versión.
+Con eso alcanza para trabajar. El resto se consulta cuando hace falta:
+
+- `docs/cli.md` — el comportamiento real de la CLI. **Manda sobre `docs/context/`** cuando
+  difieran: la intención puede quedar vieja, el comportamiento es lo que la CLI hace.
+- `docs/context/03-decisions.md` — la autoridad sobre por qué algo es como es.
+- `docs/context/02-architecture-direction.md` y `04-specification.md` — detalle de diseño.
+
+Y esto es archivo histórico, útil para entender cómo se llegó a algo pero no para
+orientarse: `01-product-context.md`, `05-roadmap.md`, `06-legacy-baseline.md`,
+`07-cli-only-transition-plan.md` y `PROJECT-CONTEXT.md`.
 
 ## Propósito del proyecto
 
