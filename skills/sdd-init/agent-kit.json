@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "sdd-init",
+  "type": "skill",
+  "version": "2.0.0",
+  "description": "Initialize Spec-Driven Development context in any project. Detects stack, conventions, and bootstraps the active persistence backend. Trigger: When user wants to initialize SDD in a project, or says \"sdd init\", \"iniciar sdd\", \"openspec init\".",
+  "files": [
+    "SKILL.md"
+  ],
+  "labels": {
+    "license": "MIT",
+    "metadata.author": "gentleman-programming",
+    "metadata.version": "2.0"
+  }
+}

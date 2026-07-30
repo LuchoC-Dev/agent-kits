@@ -1,7 +1,6 @@
 package install
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -85,7 +84,7 @@ func (h *harness) planInstall(refs ...string) *model.Plan {
 }
 
 func (h *harness) installer() *Installer {
-	installer := New(h.adapter, h.project, resourceMap(h.catalog))
+	installer := New(h.adapter, h.project)
 	installer.Now = func() time.Time { return fixedTime }
 	return installer
 }
@@ -97,14 +96,6 @@ func (h *harness) apply(refs ...string) *Report {
 		h.t.Fatalf("Apply returned %v", err)
 	}
 	return report
-}
-
-func resourceMap(cat *catalog.Catalog) map[model.ID]*model.Resource {
-	out := map[model.ID]*model.Resource{}
-	for _, res := range cat.All() {
-		out[res.ID] = res
-	}
-	return out
 }
 
 func sampleKit() []internaltest.Resource {
@@ -128,7 +119,9 @@ func sampleKit() []internaltest.Resource {
 	}
 }
 
-func TestApplyInstallsFilesLockAndDescriptor(t *testing.T) {
+// An installation writes the resources and the lockfile — and nothing else. workspace.json
+// is no longer part of a project's state (D-030).
+func TestApplyInstallsFilesAndLock(t *testing.T) {
 	h := newHarness(t, sampleKit()...)
 	report := h.apply("context")
 
@@ -140,43 +133,54 @@ func TestApplyInstallsFilesLockAndDescriptor(t *testing.T) {
 		".agents/agents/context-builder.md",
 		".agents/packs/context/pack.md",
 		".agents/agent-kits.lock.json",
-		".agents/workspace.json",
 	} {
 		if !internaltest.Exists(h.project, path) {
 			t.Errorf("%s was not written", path)
 		}
+	}
+	if internaltest.Exists(h.project, workspace.LegacyPath) {
+		t.Error("a normal command must never create workspace.json")
 	}
 	if got := internaltest.ReadFile(t, h.project, ".agents/skills/problem-framing/SKILL.md"); got != "# framing\n" {
 		t.Errorf("installed content = %q", got)
 	}
 
 	lock := h.lock()
-	if len(lock.Resources) != 3 || lock.Runtime != "claude-code" {
+	if lock.SchemaVersion != model.LockSchemaVersion || len(lock.Resources) != 3 ||
+		lock.Runtime != "claude-code" {
 		t.Fatalf("lock = %+v", lock)
 	}
 	kit, ok := lock.Find("context")
 	if !ok || !kit.Requested || kit.Source != "public" || kit.Checksum == "" {
 		t.Errorf("kit record = %+v", kit)
 	}
+	// The first write assigns the identity the project keeps for its whole life.
+	if lock.Project == nil || lock.Project.ID == "" || lock.Project.CreatedAt == "" {
+		t.Fatalf("project = %+v", lock.Project)
+	}
 
-	descriptor, present, err := workspace.LoadDescriptor(h.project, h.adapter)
-	if err != nil || !present {
-		t.Fatalf("LoadDescriptor = %v, %v", present, err)
+	// A later operation preserves that identity rather than minting a new one.
+	identity := *lock.Project
+	h.apply("problem-framing")
+	after := h.lock()
+	if after.Project == nil || after.Project.ID != identity.ID ||
+		after.Project.CreatedAt != identity.CreatedAt {
+		t.Errorf("project identity changed: %+v -> %+v", identity, after.Project)
 	}
-	if descriptor.SchemaVersion != workspace.SchemaVersion || descriptor.Runtime != "claude-code" {
-		t.Errorf("descriptor = %+v", descriptor)
+}
+
+// A project that still carries an unmigrated descriptor is never written to.
+func TestApplyRefusesAProjectPendingMigration(t *testing.T) {
+	h := newHarness(t, sampleKit()...)
+	built := h.planInstall("context")
+	internaltest.WriteFile(t, h.project, workspace.LegacyPath, `{"$schema_version": 2}`)
+
+	_, err := h.installer().Apply(built)
+	if errs.CodeOf(err) != errs.CodeWorkspaceInvalid {
+		t.Fatalf("err = %v, want workspace_invalid", err)
 	}
-	if len(descriptor.Skills) != 1 || descriptor.Skills[0].ID != "problem-framing" {
-		t.Errorf("descriptor skills = %+v", descriptor.Skills)
-	}
-	if len(descriptor.Agents) != 1 || descriptor.Agents[0].Class != 1 {
-		t.Errorf("descriptor agents = %+v", descriptor.Agents)
-	}
-	if descriptor.Pack == nil || descriptor.Pack.Name != "context" {
-		t.Errorf("descriptor pack = %+v", descriptor.Pack)
-	}
-	if !descriptor.Flags.Initialized {
-		t.Error("descriptor must be marked as initialised")
+	if internaltest.Exists(h.project, ".agents/agent-kits.lock.json") {
+		t.Error("a project pending migration was written to")
 	}
 }
 
@@ -280,9 +284,9 @@ func TestRemoveDeletesFilesAndPrunesDirectories(t *testing.T) {
 	if len(h.lock().Resources) != 0 {
 		t.Errorf("lock = %+v", h.lock().Resources)
 	}
-	// The workspace metadata itself stays, so the project remains a managed workspace.
-	if !internaltest.Exists(h.project, ".agents/workspace.json") {
-		t.Error("workspace.json should survive removing every resource")
+	// The lockfile itself stays, so the project remains a managed workspace.
+	if !internaltest.Exists(h.project, ".agents/agent-kits.lock.json") {
+		t.Error("the lockfile should survive removing every resource")
 	}
 }
 
@@ -375,118 +379,5 @@ func TestDoctorNotesOrphanFilesAndAvailableUpdates(t *testing.T) {
 	}
 	if !sawOrphan {
 		t.Errorf("notes = %+v", report.Notes)
-	}
-}
-
-// writeLegacyWorkspace simulates a workspace produced by the conversational kits-init
-// flow: content and a workspace.json, but no lockfile.
-func writeLegacyWorkspace(t *testing.T, h *harness, extra string) {
-	t.Helper()
-	internaltest.WriteFile(t, h.project, ".agents/skills/problem-framing/SKILL.md", "# framing\n")
-	internaltest.WriteFile(t, h.project, ".agents/agents/context-builder.md", "# builder\n")
-	internaltest.WriteFile(t, h.project, ".agents/packs/context/pack.md", "# pack\n")
-	internaltest.WriteFile(t, h.project, ".agents/workspace.json", `{
-  "$schema_version": 2,
-  "id": "3f1c2b7a-9d84-4e11-b6f2-77c1a9e0d512",
-  "created_at": "2026-05-22T10:00:00Z",
-  "updated_at": "2026-05-22T10:00:00Z",
-  "system_version": "0.1.0",
-  "runtime": "claude-code",
-  "pack": { "name": "context", "source": "packs/context", "installed_at": "2026-05-22T10:00:00Z" },
-  "stack": { "detected": ["go"], "source": "user-input", "confidence": "high" },
-  "skills": [{ "id": "problem-framing", "source": "skills/problem-framing", "installed_at": "2026-05-22T10:00:00Z" }],
-  "agents": [{ "id": "context-builder", "class": 1, "source": "packs/context/agents", "installed_at": "2026-05-22T10:00:00Z" }],
-  "disciplines": [],
-  "flags": { "initialized": true, "repaired_at": null, "upgraded_at": null },
-  "structure": ["agents", "skills"]`+extra+`
-}`)
-}
-
-// D-022: a workspace created by kits-init can be adopted by the CLI.
-func TestImportAdoptsLegacyWorkspace(t *testing.T) {
-	h := newHarness(t, sampleKit()...)
-	writeLegacyWorkspace(t, h, `,
-  "custom_field": {"keep": true}`)
-
-	built, err := Import(ImportInput{
-		Project: h.project, Adapter: h.adapter, Catalog: h.catalog,
-		Now: func() time.Time { return fixedTime },
-	})
-	if err != nil {
-		t.Fatalf("Import returned %v", err)
-	}
-	if len(built.Resources) != 3 {
-		t.Fatalf("adopted %d resources: %+v", len(built.Resources), built.Resources)
-	}
-	for _, change := range built.Changes {
-		if change.Action != model.ActionAdopt {
-			t.Errorf("%s action = %q, want adopt", change.Path, change.Action)
-		}
-	}
-
-	if _, err := h.installer().Apply(built); err != nil {
-		t.Fatalf("Apply returned %v", err)
-	}
-	lock := h.lock()
-	if len(lock.Resources) != 3 {
-		t.Fatalf("lock = %+v", lock.Resources)
-	}
-	// The bare agent name in workspace.json resolves to its qualified canonical id.
-	if _, ok := lock.Find("context/context-builder"); !ok {
-		t.Errorf("context/context-builder was not adopted: %+v", lock.Resources)
-	}
-
-	// Fields Agent Kits does not own must survive the rewrite.
-	raw := internaltest.ReadFile(t, h.project, ".agents/workspace.json")
-	var fields map[string]json.RawMessage
-	if err := json.Unmarshal([]byte(raw), &fields); err != nil {
-		t.Fatalf("workspace.json is not valid JSON: %v", err)
-	}
-	if _, ok := fields["custom_field"]; !ok {
-		t.Error("an unmanaged field was dropped")
-	}
-	if _, ok := fields["stack"]; !ok {
-		t.Error("the stack field was dropped")
-	}
-
-	// After adopting, a plan for the same kit is a no-op.
-	if next := h.planInstall("context"); !next.Empty() {
-		t.Errorf("a plan after import should be empty, got %+v", next.Changes)
-	}
-}
-
-func TestImportRefusesDivergentFiles(t *testing.T) {
-	h := newHarness(t, sampleKit()...)
-	writeLegacyWorkspace(t, h, "")
-	internaltest.WriteFile(t, h.project, ".agents/skills/problem-framing/SKILL.md", "locally edited\n")
-
-	built, err := Import(ImportInput{
-		Project: h.project, Adapter: h.adapter, Catalog: h.catalog,
-		Now: func() time.Time { return fixedTime },
-	})
-	if err != nil {
-		t.Fatalf("Import returned %v", err)
-	}
-	for _, res := range built.Resources {
-		if res.ID == "problem-framing" {
-			t.Error("a divergent resource must not be adopted")
-		}
-	}
-	var warned bool
-	for _, warning := range built.Warnings {
-		if warning.Code == errs.CodeLocalDivergence {
-			warned = true
-		}
-	}
-	if !warned {
-		t.Errorf("warnings = %+v", built.Warnings)
-	}
-}
-
-func TestImportRequiresAWorkspace(t *testing.T) {
-	h := newHarness(t, sampleKit()...)
-	_, err := Import(ImportInput{Project: h.project, Adapter: h.adapter, Catalog: h.catalog})
-	if errs.CodeOf(err) != errs.CodeWorkspaceInvalid {
-		t.Fatalf("err = %v, want workspace_invalid", err)
 	}
 }

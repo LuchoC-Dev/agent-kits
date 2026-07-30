@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "id": "fullstack-design",
+  "type": "kit",
+  "version": "0.1.0",
+  "description": "Pack orquestador de diseño fullstack pre-build. Compone las skills de `design` y `backend-design` en un solo workflow coordinado con 3 tiers (Lite/Standard/Full) y 2 estrategias de flujo (Separado/Integrado). No instala los packs completos — referencia solo las skills que orquesta, con un único agente y un único workflow.",
+  "dependencies": [
+    {
+      "id": "accessibility-plan"
+    },
+    {
+      "id": "api-contract"
+    },
+    {
+      "id": "code-conventions"
+    },
+    {
+      "id": "component-inventory"
+    },
+    {
+      "id": "data-model"
+    },
+    {
+      "id": "design-system-tokens"
+    },
+    {
+      "id": "discovery"
+    },
+    {
+      "id": "fullstack-design/cross-track-auditor"
+    },
+    {
+      "id": "fullstack-design/fullstack-design"
+    },
+    {
+      "id": "fullstack-design/fullstack-designer"
+    },
+    {
+      "id": "html-mockup"
+    },
+    {
+      "id": "information-architecture"
+    },
+    {
+      "id": "integrations-auth"
+    },
+    {
+      "id": "nonfunctional"
+    },
+    {
+      "id": "performance-budget"
+    },
+    {
+      "id": "progressive-design"
+    },
+    {
+      "id": "security-design"
+    },
+    {
+      "id": "service-architecture"
+    },
+    {
+      "id": "tech-decisions"
+    },
+    {
+      "id": "testing-strategy"
+    },
+    {
+      "id": "user-flows"
+    },
+    {
+      "id": "wireframes"
+    }
+  ],
+  "files": [
+    "pack.md"
+  ],
+  "produces": [
+    {
+      "artifact": "tech-decisions",
+      "path": "docs/shared/",
+      "description": "Stack fullstack — artefacto cross-cutting que usan ambos tracks."
+    },
+    {
+      "artifact": "design-spec",
+      "path": "docs/design/",
+      "description": "Track de diseño frontend — mismo artefacto que produce el pack `design`."
+    },
+    {
+      "artifact": "backend-design-spec",
+      "path": "docs/backend-design/",
+      "description": "Track de diseño backend — mismo artefacto que produce el pack `backend-design`."
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "product-context",
+      "description": "Insumo compartido por ambos tracks (discovery, dominio, jobs)."
+    }
+  ]
+}

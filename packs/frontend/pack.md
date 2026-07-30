@@ -1,6 +1,6 @@
 ---
 id: frontend
-version: "0.3.0"
+version: "0.3.1"
 description: Pack de desarrollo frontend moderno. Capacidades de UI/UX, ideación y documentación. El diseño pre-build vive en el pack `design` (dependencia).
 
 depends_on:
@@ -80,4 +80,4 @@ Pack de capacidades **de implementación** para proyectos frontend modernos. El 
 
 ## Stack detectado automáticamente
 
-Si `/kits-init` detecta en `package.json`: `react`, `vue`, `next`, `nuxt`, `vite`, `typescript`, `tailwind`, `svelte`.
+Este pack se recomienda cuando `package.json` declara: `react`, `vue`, `next`, `nuxt`, `vite`, `typescript`, `tailwind`, `svelte`.

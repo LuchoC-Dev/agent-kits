@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "frontend",
+  "type": "kit",
+  "version": "0.3.1",
+  "description": "Pack de desarrollo frontend moderno. Capacidades de UI/UX, ideación y documentación. El diseño pre-build vive en el pack `design` (dependencia).",
+  "dependencies": [
+    {
+      "id": "brainstorming"
+    },
+    {
+      "id": "design"
+    },
+    {
+      "id": "find-docs"
+    },
+    {
+      "id": "frontend/feature-development"
+    },
+    {
+      "id": "frontend/frontend-architect"
+    },
+    {
+      "id": "tools"
+    },
+    {
+      "id": "ui-ux-pro-max"
+    }
+  ],
+  "files": [
+    "pack.md"
+  ],
+  "consumes": [
+    {
+      "artifact": "design-spec",
+      "description": "Base de la implementación de UI — el código sigue lo definido acá."
+    },
+    {
+      "artifact": "product-context",
+      "description": "El qué y el porqué del producto, si discovery no lo absorbió ya."
+    }
+  ]
+}

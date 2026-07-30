@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "code-conventions",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Define el rulebook de código — patrones de diseño a aplicar y cuándo (Strategy, Repository, Factory, etc.), reglas de código (guard clauses, anidamiento, manejo de errores), naming, idioms y anti-patrones. Es la guía que cualquier desarrollador (humano o IA) sigue al implementar. Trigger cuando el usuario quiera \"convenciones de código\", \"patrones de diseño\", \"estándares\", \"guard clauses\", \"reglas de código\", \"code style\" o necesite fijar cómo se escribe el código antes de implementar.",
+  "files": [
+    "SKILL.md"
+  ],
+  "produces": [
+    {
+      "artifact": "code-conventions"
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "service-architecture"
+    },
+    {
+      "artifact": "tech-decisions"
+    }
+  ]
+}

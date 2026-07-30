@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "context/context-building",
+  "type": "workflow",
+  "version": "1.0.0",
+  "description": "Workflow de construcción de contexto pre-diseño. Dos ejes configurables — profundidad (rápido/completo/profundo) y cadencia de gate (batch/por fase). Resultado, docs/context/ con material que alimenta el discovery del pack design.",
+  "dependencies": [
+    {
+      "id": "assumptions-risks"
+    },
+    {
+      "id": "context/context-builder"
+    },
+    {
+      "id": "domain-modeling"
+    },
+    {
+      "id": "job-stories"
+    },
+    {
+      "id": "problem-framing"
+    },
+    {
+      "id": "stakeholders-map"
+    },
+    {
+      "id": "vision"
+    }
+  ],
+  "files": [
+    "context-building.md"
+  ]
+}

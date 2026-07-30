@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "backend/environment-bootstrap",
+  "type": "workflow",
+  "version": "1.0.0",
+  "description": "Setup inicial del entorno de desarrollo, staging y producción para un proyecto backend nuevo.",
+  "dependencies": [
+    {
+      "id": "build-progress"
+    },
+    {
+      "id": "docker-expert"
+    },
+    {
+      "id": "environment-setup"
+    },
+    {
+      "id": "taskfile-setup"
+    }
+  ],
+  "files": [
+    "environment-bootstrap.md"
+  ]
+}

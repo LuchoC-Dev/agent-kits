@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "stakeholders-map",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Mapea a todos los actores con interés en el producto — usuarios, sponsors, equipos internos, externos, regulatorios — con su poder, interés y postura. Identifica quién bloquea, quién impulsa, quién paga. Trigger cuando el usuario quiera \"mapear stakeholders\", \"quién está involucrado\", \"stakeholders del producto\", \"matriz poder-interés\" o necesite identificar actores clave antes de definir alcance.",
+  "files": [
+    "SKILL.md"
+  ],
+  "produces": [
+    {
+      "artifact": "stakeholders"
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "problem-framing"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "build-progress",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Creates and maintains a docs/build.md progress tracker for any software project. Use this skill proactively after completing any implementation task, phase, or feature — even if the user doesn't explicitly ask. Also trigger when the user says things like \"actualiza build.md\", \"update build.md\", \"mark X as done\", \"marcar X como completo\", \"actualiza el progreso\", \"update progress\", \"create build.md\", or \"crea el build.md\". At project start, use it to scaffold the full build.md from the project description or codebase. After any task completes, use it to mark that task/stage as done and keep the file in sync.",
+  "files": [
+    "SKILL.md"
+  ]
+}

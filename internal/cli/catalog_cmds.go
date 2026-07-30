@@ -11,6 +11,7 @@ import (
 	"github.com/LuchoC-Dev/agent-kits/internal/git"
 	"github.com/LuchoC-Dev/agent-kits/internal/model"
 	"github.com/LuchoC-Dev/agent-kits/internal/source"
+	"github.com/LuchoC-Dev/agent-kits/internal/workspace"
 )
 
 // cmdVersion reports the build and the contracts a caller can rely on.
@@ -23,20 +24,23 @@ func (a *App) cmdVersion(args []string) error {
 		return err
 	}
 	data := map[string]any{
-		"version":          Version,
-		"manifest_schema":  model.ManifestSchemaVersion,
-		"lock_schema":      model.LockSchemaVersion,
-		"workspace_schema": 2,
-		"runtimes":         adapter.Names(),
-		"types":            model.Types(),
-		"error_codes":      errs.Codes(),
-		"git_subcommands":  git.AllowedSubcommands(),
-		"remote_writes":    false,
+		"version":         Version,
+		"manifest_schema": model.ManifestSchemaVersion,
+		"lock_schema":     model.LockSchemaVersion,
+		// The lockfile a previous build wrote is still readable; workspace.json is only an
+		// input to `migrate` and is never written (D-030).
+		"lock_schema_read":  []int{model.LockSchemaVersionLegacy, model.LockSchemaVersion},
+		"migrates_from":     map[string]any{"workspace.json": []int{1, workspace.SchemaVersion}},
+		"runtimes":          adapter.Names(),
+		"types":             model.Types(),
+		"error_codes":       errs.Codes(),
+		"git_subcommands":   git.AllowedSubcommands(),
+		"remote_writes":     false,
 	}
 	return a.succeed("version", data, func() {
 		fmt.Fprintf(a.Stdout, "agent-kits %s\n", Version)
-		fmt.Fprintf(a.Stdout, "  schemas    manifest v%d · lock v%d · workspace v2\n",
-			model.ManifestSchemaVersion, model.LockSchemaVersion)
+		fmt.Fprintf(a.Stdout, "  schemas    manifest v%d · lock v%d (reads v%d)\n",
+			model.ManifestSchemaVersion, model.LockSchemaVersion, model.LockSchemaVersionLegacy)
 		fmt.Fprintf(a.Stdout, "  runtimes   %s\n", strings.Join(adapter.Names(), ", "))
 		fmt.Fprintf(a.Stdout, "  types      %s\n", joinTypes(model.Types()))
 		fmt.Fprintf(a.Stdout, "  git        read-only (%s)\n",
@@ -393,7 +397,6 @@ func (a *App) cmdInfo(args []string) error {
 		"access":       res.Access,
 		"trust":        res.Trust,
 		"commit":       res.Commit,
-		"legacy":       res.Legacy,
 		"dependencies": dependencies,
 		"dependents":   dependents,
 		"files":        res.Files,

@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "id": "design/designer",
+  "type": "agent",
+  "version": "1.0.0",
+  "description": "Diseñador que orquesta el workflow pre-build-design en cualquiera de sus 3 modos (Basic, Medium, Advanced). Genera documentación de diseño en docs/design/ antes de implementar. Aplica a frontend, mobile y productos digitales en general.",
+  "dependencies": [
+    {
+      "id": "accessibility-plan"
+    },
+    {
+      "id": "artifact-validator"
+    },
+    {
+      "id": "component-inventory"
+    },
+    {
+      "id": "design-critic"
+    },
+    {
+      "id": "design-system-tokens"
+    },
+    {
+      "id": "design/pre-build-design"
+    },
+    {
+      "id": "discovery"
+    },
+    {
+      "id": "information-architecture"
+    },
+    {
+      "id": "performance-budget"
+    },
+    {
+      "id": "research-scout"
+    },
+    {
+      "id": "tech-decisions"
+    },
+    {
+      "id": "user-flows"
+    },
+    {
+      "id": "wireframe-renderer"
+    },
+    {
+      "id": "wireframes"
+    }
+  ],
+  "files": [
+    "designer.md"
+  ]
+}

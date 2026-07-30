@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "id": "integrations-auth",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Define las integraciones con terceros, la mensajería/eventos, y la estrategia de autenticación y autorización. Trigger cuando el usuario quiera \"integrar un servicio externo\", \"autenticación\", \"autorización\", \"JWT o sesiones\", \"OAuth\", \"roles y permisos\", \"RBAC\", \"webhooks\", \"mensajería\" o necesite cerrar cómo el backend se conecta hacia afuera y cómo protege sus recursos.",
+  "files": [
+    "SKILL.md"
+  ],
+  "produces": [
+    {
+      "artifact": "integrations-auth"
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "api-contract"
+    },
+    {
+      "artifact": "service-architecture"
+    },
+    {
+      "artifact": "stakeholders"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "branch-pr",
+  "type": "skill",
+  "name": "engram-branch-pr",
+  "version": "2.0.0",
+  "description": "PR creation workflow for Engram following the issue-first enforcement system. Trigger: When creating a pull request, opening a PR, or preparing changes for review.",
+  "files": [
+    "SKILL.md"
+  ],
+  "labels": {
+    "license": "Apache-2.0",
+    "metadata.author": "gentleman-programming",
+    "metadata.version": "2.0"
+  }
+}

@@ -112,12 +112,16 @@ func TestGetAndDetect(t *testing.T) {
 	}
 }
 
+// The lockfile is the only metadata path an adapter declares (D-030), and every runtime
+// shares it, which is what keeps a workspace portable between them.
 func TestMetadataPaths(t *testing.T) {
-	a, _ := Get("agents")
-	if a.LockPath() != ".agents/agent-kits.lock.json" {
-		t.Errorf("LockPath = %q", a.LockPath())
-	}
-	if a.WorkspacePath() != ".agents/workspace.json" {
-		t.Errorf("WorkspacePath = %q", a.WorkspacePath())
+	for _, name := range Names() {
+		a, err := Get(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if a.LockPath() != ".agents/agent-kits.lock.json" {
+			t.Errorf("%s LockPath = %q", name, a.LockPath())
+		}
 	}
 }

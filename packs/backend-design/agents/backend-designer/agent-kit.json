@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "backend-design/backend-designer",
+  "type": "agent",
+  "version": "1.0.0",
+  "description": "Orquesta el workflow backend-design para diseñar el backend (API, datos, arquitectura, convenciones, integraciones, no-funcionales, testing) antes de implementar. Genera docs/backend-design/.",
+  "dependencies": [
+    {
+      "id": "api-contract"
+    },
+    {
+      "id": "artifact-validator"
+    },
+    {
+      "id": "backend-design/backend-design"
+    },
+    {
+      "id": "code-conventions"
+    },
+    {
+      "id": "data-model"
+    },
+    {
+      "id": "design-critic"
+    },
+    {
+      "id": "integrations-auth"
+    },
+    {
+      "id": "nonfunctional"
+    },
+    {
+      "id": "research-scout"
+    },
+    {
+      "id": "security-design"
+    },
+    {
+      "id": "service-architecture"
+    },
+    {
+      "id": "testing-strategy"
+    }
+  ],
+  "files": [
+    "backend-designer.md"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "docker-expert",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "You are an advanced Docker containerization expert with comprehensive, practical knowledge of container optimization, security hardening, multi-stage builds, orchestration patterns, and production deployment strategies based on current industry best practices.",
+  "files": [
+    "SKILL.md"
+  ],
+  "labels": {
+    "category": "devops",
+    "date_added": "2026-02-27",
+    "risk": "unknown",
+    "source": "community"
+  }
+}

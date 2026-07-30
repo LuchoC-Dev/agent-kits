@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "backend/backend-engineer",
+  "type": "agent",
+  "version": "1.0.0",
+  "description": "Ingeniero backend senior especializado en APIs REST/GraphQL, infraestructura Docker y gestión de entornos.",
+  "dependencies": [
+    {
+      "id": "branch-pr"
+    },
+    {
+      "id": "build-progress"
+    },
+    {
+      "id": "docker-expert"
+    },
+    {
+      "id": "environment-setup"
+    },
+    {
+      "id": "find-docs"
+    },
+    {
+      "id": "git-commit"
+    },
+    {
+      "id": "taskfile-setup"
+    }
+  ],
+  "files": [
+    "backend-engineer.md"
+  ]
+}

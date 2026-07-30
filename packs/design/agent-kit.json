@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "id": "design",
+  "type": "kit",
+  "version": "0.1.0",
+  "description": "Pack de diseño pre-build. Orquesta el proceso completo de diseño (discovery, IA, flows, componentes, tokens, wireframes, a11y, performance, tech decisions) antes de implementar. Aplica a frontend, mobile y productos digitales en general.",
+  "dependencies": [
+    {
+      "id": "accessibility-plan"
+    },
+    {
+      "id": "component-inventory"
+    },
+    {
+      "id": "design-system-tokens"
+    },
+    {
+      "id": "design/designer"
+    },
+    {
+      "id": "design/pre-build-design"
+    },
+    {
+      "id": "discovery"
+    },
+    {
+      "id": "html-mockup"
+    },
+    {
+      "id": "information-architecture"
+    },
+    {
+      "id": "performance-budget"
+    },
+    {
+      "id": "progressive-design"
+    },
+    {
+      "id": "tech-decisions"
+    },
+    {
+      "id": "user-flows"
+    },
+    {
+      "id": "wireframes"
+    }
+  ],
+  "files": [
+    "pack.md"
+  ],
+  "produces": [
+    {
+      "artifact": "design-spec",
+      "path": "docs/design/",
+      "description": "Diseño pre-build — discovery, IA, flows, componentes, tokens, visual, tech-decisions."
+    },
+    {
+      "artifact": "tech-decisions",
+      "path": "docs/design/*tech-decisions*.md",
+      "description": "Stack técnico justificado. Lleva en su frontmatter `scope: frontend | fullstack`."
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "product-context",
+      "description": "Si existe, discovery lo usa como insumo del Intake en vez de preguntar desde cero."
+    }
+  ]
+}

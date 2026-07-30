@@ -20,7 +20,8 @@ const WorkspaceDir = ".agents"
 // LockName is the lockfile's name inside the workspace.
 const LockName = "agent-kits.lock.json"
 
-// WorkspaceFile is the inherited workspace descriptor kits-init reads and writes.
+// WorkspaceFile is the inherited descriptor the retired kits-init flow used to write. No
+// adapter targets it: it survives here only so the migration can name it (D-030).
 const WorkspaceFile = "workspace.json"
 
 // Auto is the runtime selector that asks the adapter registry to detect the environment.
@@ -28,14 +29,13 @@ const Auto = "auto"
 
 // Adapter places resources for one runtime.
 type Adapter interface {
-	// Name is the runtime identifier recorded in the lockfile and workspace.json.
+	// Name is the runtime identifier recorded in the lockfile.
 	Name() string
 	// Destination returns the project-relative, slash-separated path for one file of a
 	// resource, given that file's path relative to the resource root.
 	Destination(res *model.Resource, rel string) (string, error)
-	// LockPath and WorkspacePath are the metadata files the runtime uses.
+	// LockPath is the only metadata file a runtime carries (D-030).
 	LockPath() string
-	WorkspacePath() string
 }
 
 // workspaceAdapter implements the .agents layout. The three supported runtimes share it
@@ -47,10 +47,9 @@ func (a workspaceAdapter) Name() string { return a.name }
 
 func (a workspaceAdapter) LockPath() string { return WorkspaceDir + "/" + LockName }
 
-func (a workspaceAdapter) WorkspacePath() string { return WorkspaceDir + "/" + WorkspaceFile }
-
-// Destination reproduces the directory layout the inherited kits-init flow creates, so a
-// workspace stays readable by both the CLI and the conversational skill (D-022).
+// Destination keeps the portable .agents layout the inherited flow established. The layout
+// is now the CLI's own: a project migrated onto lockfile v2 keeps every path it had, so
+// retiring workspace.json moves no file (07-cli-only-transition-plan.md §7).
 func (a workspaceAdapter) Destination(res *model.Resource, rel string) (string, error) {
 	clean := strings.TrimPrefix(strings.ReplaceAll(rel, `\`, "/"), "./")
 	if clean == "" {

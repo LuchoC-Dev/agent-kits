@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "id": "user-flows",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Documenta los caminos críticos del usuario paso a paso, con estados, decisiones y errores. Trigger cuando el usuario quiera \"mapear flujos\", \"user flows\", \"diagramar caminos del usuario\", \"definir el happy path\" o necesite entender los recorridos antes de wireframes.",
+  "files": [
+    "SKILL.md"
+  ],
+  "produces": [
+    {
+      "artifact": "user-flows"
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "discovery"
+    },
+    {
+      "artifact": "product-context"
+    },
+    {
+      "artifact": "information-architecture"
+    }
+  ]
+}

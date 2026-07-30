@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "id": "backend",
+  "type": "kit",
+  "version": "0.1.1",
+  "description": "Pack de desarrollo backend. Incluye capacidades de Docker, configuración de entornos, automatización de tareas, documentación de progreso y workflow Git.",
+  "dependencies": [
+    {
+      "id": "backend/backend-engineer"
+    },
+    {
+      "id": "backend/environment-bootstrap"
+    },
+    {
+      "id": "backend/feature-development"
+    },
+    {
+      "id": "branch-pr"
+    },
+    {
+      "id": "build-progress"
+    },
+    {
+      "id": "find-docs"
+    },
+    {
+      "id": "tools"
+    }
+  ],
+  "files": [
+    "pack.md"
+  ],
+  "produces": [
+    {
+      "artifact": "build-progress",
+      "path": "docs/build.md",
+      "description": "Tracker de progreso de la implementación."
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "backend-design-spec",
+      "description": "Plano técnico del backend — API, datos, arquitectura, convenciones. La implementación lo sigue."
+    },
+    {
+      "artifact": "product-context",
+      "description": "El qué y el porqué — usado si no hay backend-design previo."
+    }
+  ]
+}

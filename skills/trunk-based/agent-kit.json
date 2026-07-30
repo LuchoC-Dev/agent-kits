@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "trunk-based",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Disciplina de integración trunk-based development — ramas de vida corta, commits chicos, integración frecuente a una sola rama principal siempre desplegable. Trigger cuando el proyecto tiene `trunk-based` en las disciplinas activas, o el usuario pide \"trunk-based\", \"ramas cortas\", \"integración continua\", \"commits chicos\", o quiere una disciplina de branching.",
+  "files": [
+    "SKILL.md"
+  ],
+  "traits": {
+    "combinable": true,
+    "discipline": true
+  }
+}

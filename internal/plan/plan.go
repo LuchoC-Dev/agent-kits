@@ -66,7 +66,9 @@ func (p *Planner) Install(result *resolve.Result) (*model.Plan, error) {
 	}
 	out.Warnings = append(out.Warnings, result.Diagnostics...)
 
-	proposed := model.NewLock(p.Adapter.Name())
+	// A proposal starts from the project's own identity and migration history: installing
+	// something must never drop the state the lockfile already owns.
+	proposed := p.Lock.Proposal(p.Adapter.Name())
 	proposed.GeneratedAt = p.timestamp()
 	// Resources the operation does not touch keep their existing records.
 	touched := map[model.ID]bool{}
@@ -489,17 +491,16 @@ func (p *Planner) reachable(
 	return keep
 }
 
-// addMetadata records the bookkeeping files the operation rewrites.
+// addMetadata records the bookkeeping file the operation rewrites, which since lockfile
+// schema 2 is the lockfile alone (D-030).
 func (p *Planner) addMetadata(out *model.Plan) {
 	if out.Empty() && !out.Blocked() {
 		return
 	}
-	for _, path := range []string{p.Adapter.LockPath(), p.Adapter.WorkspacePath()} {
-		action := model.ActionCreate
-		if abs, err := security.Contain(p.Project, path); err == nil && fsutil.Exists(abs) {
-			action = model.ActionUpdate
-		}
-		out.Metadata = append(out.Metadata, model.FileChange{Path: path, Action: action})
+	path := p.Adapter.LockPath()
+	action := model.ActionCreate
+	if abs, err := security.Contain(p.Project, path); err == nil && fsutil.Exists(abs) {
+		action = model.ActionUpdate
 	}
-	sort.SliceStable(out.Metadata, func(i, j int) bool { return out.Metadata[i].Path < out.Metadata[j].Path })
+	out.Metadata = append(out.Metadata, model.FileChange{Path: path, Action: action})
 }

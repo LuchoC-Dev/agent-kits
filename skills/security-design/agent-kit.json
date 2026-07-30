@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "security-design",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Deep-dive de seguridad para sistemas que manejan datos sensibles, están regulados o tienen alta superficie de ataque. Cubre threat modeling, hardening, protección de datos, audit logging, compliance y gestión de vulnerabilidades. Trigger cuando el usuario quiera \"diseño de seguridad\", \"threat modeling\", \"hardening\", \"protección de datos\", \"cifrado\", \"compliance\", \"GDPR\", \"PCI\", \"audit log\", \"rate limiting\" o el sistema tenga requisitos de seguridad fuertes.",
+  "files": [
+    "SKILL.md"
+  ],
+  "produces": [
+    {
+      "artifact": "security-design"
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "api-contract"
+    },
+    {
+      "artifact": "data-model"
+    },
+    {
+      "artifact": "service-architecture"
+    },
+    {
+      "artifact": "integrations-auth"
+    }
+  ]
+}

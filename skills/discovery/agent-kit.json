@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "discovery",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Define producto, usuarios, jobs-to-be-done y métricas de éxito. Arranca con un paso 0 (Intake) que recoge la descripción del producto del usuario y se adapta al contexto disponible, luego ejecuta preguntas adaptadas al dominio. Trigger cuando el usuario quiera \"arrancar un diseño\", \"discovery\", \"entender qué construir\", \"definir el producto\" o esté por iniciar cualquier proyecto sin claridad sobre qué problema resuelve.",
+  "files": [
+    "SKILL.md"
+  ],
+  "produces": [
+    {
+      "artifact": "discovery"
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "product-context"
+    }
+  ]
+}

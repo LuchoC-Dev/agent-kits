@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "wireframe-renderer",
+  "type": "agent",
+  "version": "1.0.0",
+  "description": "Genera wireframes HTML a partir de los artefactos de diseño (information-architecture, component-inventory). Escribe los archivos directamente al disco — el output verboso nunca toca el contexto del orquestador. Paralelizable por pantalla.",
+  "files": [
+    "wireframe-renderer.md"
+  ],
+  "labels": {
+    "class": "2",
+    "invocation.interactive": "false",
+    "invocation.output": "manifiesto corto de lo generado (archivos creados, pantallas cubiertas, advertencias)",
+    "invocation.writes_files": "true"
+  }
+}

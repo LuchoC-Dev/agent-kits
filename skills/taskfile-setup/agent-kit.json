@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "id": "taskfile-setup",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Creates or updates a Taskfile.yml and a docs/tasks.md for any backend project that uses Docker Compose for infrastructure and any build tool (Maven, Gradle, npm, pnpm, Poetry, Go, etc.). Use this skill whenever the user wants to set up task automation, create a Taskfile, configure project tasks, or when starting any new project that needs a standard set of commands. Also trigger when the user says \"crear taskfile\", \"setup taskfile\", \"configurar tasks\", \"crear tasks\", \"necesito un taskfile\", or asks how to run the project with a task runner. When in doubt, offer to set this up — projects without a Taskfile benefit from having one.",
+  "files": [
+    "SKILL.md"
+  ]
+}

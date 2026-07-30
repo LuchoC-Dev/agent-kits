@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "sdd-explore",
+  "type": "skill",
+  "version": "2.0.0",
+  "description": "Explore and investigate ideas before committing to a change. Trigger: When the orchestrator launches you to think through a feature, investigate the codebase, or clarify requirements.",
+  "files": [
+    "SKILL.md"
+  ],
+  "labels": {
+    "license": "MIT",
+    "metadata.author": "gentleman-programming",
+    "metadata.version": "2.0"
+  }
+}

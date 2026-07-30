@@ -1,6 +1,6 @@
 ---
 id: backend
-version: "0.1.0"
+version: "0.1.1"
 description: Pack de desarrollo backend. Incluye capacidades de Docker, configuración de entornos, automatización de tareas, documentación de progreso y workflow Git.
 
 depends_on:
@@ -95,5 +95,5 @@ Pack de capacidades para proyectos backend. Al instalarse, distribuye sus skills
 
 ## Stack detectado automáticamente
 
-Si `/kits-init` detecta cualquiera de los siguientes, este pack se recomienda automáticamente:
+Este pack se recomienda cuando el proyecto usa cualquiera de los siguientes:
 `express`, `fastify`, `nestjs`, `django`, `fastapi`, `flask`, `spring`, `rails`, `laravel`, `go`, `rust`, `prisma`, `typeorm`

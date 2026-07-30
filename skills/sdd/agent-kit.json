@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "id": "sdd",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Disciplina Spec-Driven Development — la spec (intent, scope, requirements, design, tasks) es la fuente de verdad y antecede a la implementación. Compuesta por el orquestador `sdd-flow` y sus sub-skills (sdd-init, sdd-explore, sdd-propose, sdd-spec, sdd-design, sdd-tasks, sdd-apply, sdd-verify, sdd-archive). Trigger cuando el proyecto tiene `sdd` en las disciplinas activas, o el usuario pide \"SDD\", \"spec-driven\", \"spec primero\", \"OpenSpec\", \"iniciar sdd\", \"sdd init\", o quiere proponer/diseñar/implementar un cambio bajo el flujo de specs.",
+  "dependencies": [
+    {
+      "id": "sdd-apply"
+    },
+    {
+      "id": "sdd-archive"
+    },
+    {
+      "id": "sdd-design"
+    },
+    {
+      "id": "sdd-explore"
+    },
+    {
+      "id": "sdd-flow"
+    },
+    {
+      "id": "sdd-init"
+    },
+    {
+      "id": "sdd-propose"
+    },
+    {
+      "id": "sdd-spec"
+    },
+    {
+      "id": "sdd-tasks"
+    },
+    {
+      "id": "sdd-verify"
+    }
+  ],
+  "files": [
+    "SKILL.md"
+  ],
+  "traits": {
+    "combinable": true,
+    "discipline": true
+  }
+}

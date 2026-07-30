@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "context",
+  "type": "kit",
+  "version": "0.3.0",
+  "description": "Pack de construcción de contexto pre-diseño. 6 áreas (problem framing, stakeholders, domain model, job stories, vision, assumptions \u0026 risks) con profundidad y cadencia de gate configurables. Genera docs/context/ que alimenta al pack `design`. Las metodologías de implementación (BDD/SDD/TDD) viven en otro pack — este es puro contexto.",
+  "dependencies": [
+    {
+      "id": "assumptions-risks"
+    },
+    {
+      "id": "context/context-builder"
+    },
+    {
+      "id": "context/context-building"
+    },
+    {
+      "id": "domain-modeling"
+    },
+    {
+      "id": "job-stories"
+    },
+    {
+      "id": "problem-framing"
+    },
+    {
+      "id": "stakeholders-map"
+    },
+    {
+      "id": "vision"
+    }
+  ],
+  "files": [
+    "pack.md"
+  ],
+  "produces": [
+    {
+      "artifact": "product-context",
+      "path": "docs/context/",
+      "description": "Contexto del producto — 6 áreas, en 6 archivos canónicos o un context.md consolidado."
+    }
+  ]
+}

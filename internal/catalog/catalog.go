@@ -1,8 +1,8 @@
 // Package catalog turns sources into a queryable view of canonical resources.
 //
-// Two source layouts are supported and may coexist in the same source: the native layout
-// (per-resource agent-kit.json) and the inherited Markdown layout (D-026). Both produce
-// the same in-memory model, so nothing downstream knows which one a resource came from.
+// A source declares its resources with a per-resource agent-kit.json (D-017). The adapter
+// that synthesised manifests from the inherited Markdown layout was retired once the whole
+// catalog became native (D-032, D-034), so there is exactly one way to describe a resource.
 package catalog
 
 import (
@@ -177,11 +177,7 @@ func (l *Loader) LoadCheckout(checkout source.Checkout) (*Catalog, error) {
 	if err != nil {
 		return nil, err
 	}
-	legacy, err := l.loadLegacy(checkout, cat)
-	if err != nil {
-		return nil, err
-	}
-	if !native && !legacy {
+	if !native {
 		cat.warn(errs.CodeSourceUnavailable, checkout.Source.Name,
 			"source exposes no recognised catalog layout")
 	}

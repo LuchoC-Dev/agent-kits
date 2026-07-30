@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "sdd-verify",
+  "type": "skill",
+  "version": "2.0.0",
+  "description": "Validate that implementation matches specs, design, and tasks. Trigger: When the orchestrator launches you to verify a completed (or partially completed) change.",
+  "files": [
+    "SKILL.md"
+  ],
+  "labels": {
+    "license": "MIT",
+    "metadata.author": "gentleman-programming",
+    "metadata.version": "2.0"
+  }
+}

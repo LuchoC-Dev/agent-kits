@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "sdd-flow",
+  "type": "skill",
+  "name": "engram-sdd-flow",
+  "version": "1.0.0",
+  "description": "Spec-Driven Development workflow for Engram. Trigger: When user requests SDD or multi-phase implementation planning.",
+  "files": [
+    "SKILL.md"
+  ],
+  "labels": {
+    "license": "Apache-2.0",
+    "metadata.author": "gentleman-programming",
+    "metadata.version": "1.0"
+  }
+}

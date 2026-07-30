@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "sdd-spec",
+  "type": "skill",
+  "version": "2.0.0",
+  "description": "Write specifications with requirements and scenarios (delta specs for changes). Trigger: When the orchestrator launches you to write or update specs for a change.",
+  "files": [
+    "SKILL.md"
+  ],
+  "labels": {
+    "license": "MIT",
+    "metadata.author": "gentleman-programming",
+    "metadata.version": "2.0"
+  }
+}

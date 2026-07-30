@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "backend-design/backend-design",
+  "type": "workflow",
+  "version": "1.0.0",
+  "description": "Workflow de diseño técnico de backend pre-build con 3 modos de scope (Basic, Medium, Advanced). Selecciona el subset de fases adecuado al tamaño del sistema y produce documentación en docs/backend-design/.",
+  "dependencies": [
+    {
+      "id": "backend-design/backend-designer"
+    }
+  ],
+  "files": [
+    "backend-design.md"
+  ]
+}

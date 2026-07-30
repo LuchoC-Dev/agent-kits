@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "frontend/feature-development",
+  "type": "workflow",
+  "version": "1.0.0",
+  "description": "Workflow completo para desarrollar una feature frontend desde la idea hasta el PR. Aplica las disciplinas de desarrollo activas del proyecto.",
+  "dependencies": [
+    {
+      "id": "bdd"
+    },
+    {
+      "id": "brainstorming"
+    },
+    {
+      "id": "branch-pr"
+    },
+    {
+      "id": "find-docs"
+    },
+    {
+      "id": "git-commit"
+    },
+    {
+      "id": "ui-ux-pro-max"
+    }
+  ],
+  "files": [
+    "frontend-feature-development.md"
+  ]
+}

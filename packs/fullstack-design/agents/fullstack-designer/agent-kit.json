@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "id": "fullstack-design/fullstack-designer",
+  "type": "agent",
+  "version": "1.0.0",
+  "description": "Orquesta el workflow fullstack-design, componiendo el track de diseño frontend y el de backend en un proceso coordinado, con un único setup y una sola decisión de stack.",
+  "dependencies": [
+    {
+      "id": "accessibility-plan"
+    },
+    {
+      "id": "api-contract"
+    },
+    {
+      "id": "artifact-validator"
+    },
+    {
+      "id": "code-conventions"
+    },
+    {
+      "id": "component-inventory"
+    },
+    {
+      "id": "data-model"
+    },
+    {
+      "id": "design-critic"
+    },
+    {
+      "id": "design-system-tokens"
+    },
+    {
+      "id": "discovery"
+    },
+    {
+      "id": "fullstack-design/fullstack-design"
+    },
+    {
+      "id": "html-mockup"
+    },
+    {
+      "id": "information-architecture"
+    },
+    {
+      "id": "integrations-auth"
+    },
+    {
+      "id": "nonfunctional"
+    },
+    {
+      "id": "performance-budget"
+    },
+    {
+      "id": "progressive-design"
+    },
+    {
+      "id": "research-scout"
+    },
+    {
+      "id": "security-design"
+    },
+    {
+      "id": "service-architecture"
+    },
+    {
+      "id": "tech-decisions"
+    },
+    {
+      "id": "testing-strategy"
+    },
+    {
+      "id": "user-flows"
+    },
+    {
+      "id": "wireframes"
+    }
+  ],
+  "files": [
+    "fullstack-designer.md"
+  ]
+}

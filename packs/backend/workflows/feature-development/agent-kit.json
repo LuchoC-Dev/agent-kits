@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "id": "backend/feature-development",
+  "type": "workflow",
+  "version": "1.0.0",
+  "description": "Workflow para desarrollar una feature backend desde el diseño hasta el PR. Aplica las disciplinas de desarrollo activas del proyecto.",
+  "dependencies": [
+    {
+      "id": "bdd"
+    },
+    {
+      "id": "branch-pr"
+    },
+    {
+      "id": "build-progress"
+    },
+    {
+      "id": "docker-expert"
+    },
+    {
+      "id": "environment-setup"
+    },
+    {
+      "id": "find-docs"
+    },
+    {
+      "id": "git-commit"
+    },
+    {
+      "id": "taskfile-setup"
+    }
+  ],
+  "files": [
+    "backend-feature-development.md"
+  ]
+}

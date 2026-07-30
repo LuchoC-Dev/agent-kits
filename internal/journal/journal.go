@@ -1,4 +1,12 @@
-package install
+// Package journal makes a multi-file operation recoverable.
+//
+// Every file an operation overwrites or deletes is copied aside first, so any failure can
+// restore the project to its previous state. A partially applied operation is never left
+// behind (02-architecture-direction.md §7).
+//
+// Backups live in a temporary directory outside the project: a failed operation must not
+// leave stray files inside the workspace it was supposed to change.
+package journal
 
 import (
 	"fmt"
@@ -10,17 +18,14 @@ import (
 	"github.com/LuchoC-Dev/agent-kits/internal/security"
 )
 
-// journal records every filesystem mutation of one operation so it can be undone.
-//
-// Backups live in a temporary directory outside the project: a failed install must not
-// leave stray files inside the workspace it was supposed to change.
-type journal struct {
+// Journal records the filesystem mutations of one operation so they can be undone.
+type Journal struct {
 	project   string
 	backupDir string
-	entries   []journalEntry
+	entries   []entry
 }
 
-type journalEntry struct {
+type entry struct {
 	// path is project-relative and slash-separated.
 	path string
 	// existed reports whether the file was present before the operation.
@@ -31,40 +36,41 @@ type journalEntry struct {
 	removed bool
 }
 
-func newJournal(project string) (*journal, error) {
+// New opens a journal for one project.
+func New(project string) (*Journal, error) {
 	dir, err := os.MkdirTemp("", "agent-kits-journal-*")
 	if err != nil {
 		return nil, errs.Wrap(errs.CodeInternal, err, "cannot create a rollback directory")
 	}
-	return &journal{project: project, backupDir: dir}, nil
+	return &Journal{project: project, backupDir: dir}, nil
 }
 
-// backup saves the current content of a path, if any, and records the intent.
-func (j *journal) backup(path string, removing bool) (string, error) {
+// save copies the current content of a path, if any, and records the intent.
+func (j *Journal) save(path string, removing bool) (string, error) {
 	abs, err := security.Contain(j.project, path)
 	if err != nil {
 		return "", err
 	}
-	entry := journalEntry{path: path, removed: removing}
+	record := entry{path: path, removed: removing}
 
 	if fsutil.Exists(abs) {
 		content, readErr := os.ReadFile(abs)
 		if readErr != nil {
 			return "", errs.Wrap(errs.CodeInternal, readErr, "cannot back up %s", path)
 		}
-		entry.existed = true
-		entry.backup = filepath.Join(j.backupDir, fmt.Sprintf("%04d.bak", len(j.entries)))
-		if writeErr := os.WriteFile(entry.backup, content, 0o644); writeErr != nil {
+		record.existed = true
+		record.backup = filepath.Join(j.backupDir, fmt.Sprintf("%04d.bak", len(j.entries)))
+		if writeErr := os.WriteFile(record.backup, content, 0o644); writeErr != nil {
 			return "", errs.Wrap(errs.CodeInternal, writeErr, "cannot back up %s", path)
 		}
 	}
-	j.entries = append(j.entries, entry)
+	j.entries = append(j.entries, record)
 	return abs, nil
 }
 
-// write installs new content at a project-relative path.
-func (j *journal) write(path string, content []byte) error {
-	abs, err := j.backup(path, false)
+// Write installs new content at a project-relative path.
+func (j *Journal) Write(path string, content []byte) error {
+	abs, err := j.save(path, false)
 	if err != nil {
 		return err
 	}
@@ -74,9 +80,9 @@ func (j *journal) write(path string, content []byte) error {
 	return nil
 }
 
-// remove deletes a project-relative path.
-func (j *journal) remove(path string) error {
-	abs, err := j.backup(path, true)
+// Remove deletes a project-relative path.
+func (j *Journal) Remove(path string) error {
+	abs, err := j.save(path, true)
 	if err != nil {
 		return err
 	}
@@ -86,12 +92,12 @@ func (j *journal) remove(path string) error {
 	return nil
 }
 
-// rollback restores every recorded path to its pre-operation state, newest first.
-func (j *journal) rollback() error {
+// Rollback restores every recorded path to its pre-operation state, newest first.
+func (j *Journal) Rollback() error {
 	var firstErr error
 	for i := len(j.entries) - 1; i >= 0; i-- {
-		entry := j.entries[i]
-		abs, err := security.Contain(j.project, entry.path)
+		record := j.entries[i]
+		abs, err := security.Contain(j.project, record.path)
 		if err != nil {
 			if firstErr == nil {
 				firstErr = err
@@ -99,8 +105,8 @@ func (j *journal) rollback() error {
 			continue
 		}
 		switch {
-		case entry.existed:
-			content, readErr := os.ReadFile(entry.backup)
+		case record.existed:
+			content, readErr := os.ReadFile(record.backup)
 			if readErr != nil {
 				if firstErr == nil {
 					firstErr = readErr
@@ -110,7 +116,7 @@ func (j *journal) rollback() error {
 			if writeErr := fsutil.WriteFileAtomic(abs, content, 0o644); writeErr != nil && firstErr == nil {
 				firstErr = writeErr
 			}
-		case !entry.removed:
+		case !record.removed:
 			// The operation created this file, so undoing it means deleting it.
 			if removeErr := os.Remove(abs); removeErr != nil && !os.IsNotExist(removeErr) && firstErr == nil {
 				firstErr = removeErr
@@ -120,8 +126,8 @@ func (j *journal) rollback() error {
 	return firstErr
 }
 
-// discard drops the backups. It is safe to call twice.
-func (j *journal) discard() {
+// Discard drops the backups. It is safe to call twice.
+func (j *Journal) Discard() {
 	if j.backupDir == "" {
 		return
 	}

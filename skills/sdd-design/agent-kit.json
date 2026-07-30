@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "sdd-design",
+  "type": "skill",
+  "version": "2.0.0",
+  "description": "Create technical design document with architecture decisions and approach. Trigger: When the orchestrator launches you to write or update the technical design for a change.",
+  "files": [
+    "SKILL.md"
+  ],
+  "labels": {
+    "license": "MIT",
+    "metadata.author": "gentleman-programming",
+    "metadata.version": "2.0"
+  }
+}

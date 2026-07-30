@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "progressive-design",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Orquesta un proceso progresivo wireframes ASCII → html-mockup → ajustes iterativos. Usar cuando el usuario quiera \"ir construyendo el diseño de a poco\", \"wireframe primero y después HTML\", \"design progresivo\" o necesite validar estructura antes de invertir en mockups visuales.",
+  "files": [
+    "SKILL.md"
+  ],
+  "produces": [
+    {
+      "artifact": "wireframes"
+    },
+    {
+      "artifact": "html-mockups"
+    },
+    {
+      "artifact": "progressive-summary"
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "component-inventory"
+    },
+    {
+      "artifact": "design-tokens"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "backend-design",
+  "type": "kit",
+  "version": "0.1.0",
+  "description": "Pack de diseño técnico de backend pre-build. 7 fases (API contract, modelo de datos, arquitectura de servicios, convenciones de código, integraciones \u0026 auth, no-funcionales, testing) con 3 modos de scope. Hermano de `design` — corre en paralelo, ambos consumen `context`.",
+  "dependencies": [
+    {
+      "id": "api-contract"
+    },
+    {
+      "id": "backend-design/backend-design"
+    },
+    {
+      "id": "backend-design/backend-designer"
+    },
+    {
+      "id": "code-conventions"
+    },
+    {
+      "id": "data-model"
+    },
+    {
+      "id": "integrations-auth"
+    },
+    {
+      "id": "nonfunctional"
+    },
+    {
+      "id": "security-design"
+    },
+    {
+      "id": "service-architecture"
+    },
+    {
+      "id": "testing-strategy"
+    }
+  ],
+  "files": [
+    "pack.md"
+  ],
+  "produces": [
+    {
+      "artifact": "backend-design-spec",
+      "path": "docs/backend-design/",
+      "description": "Diseño técnico del backend — API, datos, arquitectura, convenciones, integraciones, no-funcionales y testing. En 7 archivos canónicos o un backend-design.md consolidado."
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "product-context",
+      "description": "Usa domain-model (entidades → recursos y schema), job-stories y vision como insumo."
+    },
+    {
+      "artifact": "tech-decisions",
+      "description": "Lee el campo `scope`. Si es `fullstack`, el stack del backend ya está decidido y se omite el Paso 0."
+    }
+  ]
+}

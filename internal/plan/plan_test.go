@@ -117,7 +117,8 @@ func TestPlanCreatesFilesAtRuntimeDestinations(t *testing.T) {
 	if built.Lock == nil || len(built.Lock.Resources) != 4 {
 		t.Fatalf("proposed lock = %+v", built.Lock)
 	}
-	if len(built.Metadata) != 2 {
+	// The lockfile is the only bookkeeping file an operation rewrites (D-030).
+	if len(built.Metadata) != 1 || built.Metadata[0].Path != f.adapter.LockPath() {
 		t.Errorf("metadata = %+v", built.Metadata)
 	}
 }

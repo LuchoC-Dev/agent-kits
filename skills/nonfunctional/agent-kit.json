@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "nonfunctional",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Define los requisitos no-funcionales y la operabilidad — escalabilidad, caching, observabilidad (logs, métricas, tracing) y resiliencia (retries, timeouts, circuit breakers). Trigger cuando el usuario quiera \"escalabilidad\", \"performance del backend\", \"caching\", \"observabilidad\", \"logs y métricas\", \"tracing\", \"resiliencia\", \"circuit breaker\" o necesite cerrar cómo el sistema se comporta bajo carga y fallas.",
+  "files": [
+    "SKILL.md"
+  ],
+  "produces": [
+    {
+      "artifact": "nonfunctional"
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "service-architecture"
+    },
+    {
+      "artifact": "integrations-auth"
+    }
+  ]
+}

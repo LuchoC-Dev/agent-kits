@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "domain-modeling",
+  "type": "skill",
+  "version": "1.0.0",
+  "description": "Construye el modelo del dominio — entidades clave, relaciones, eventos y lenguaje ubicuo (DDD estratégico ligero). Genera un glosario que todos los stakeholders usan con el mismo significado. Trigger cuando el usuario quiera \"modelar el dominio\", \"domain-driven design\", \"ubiquitous language\", \"event storming\", \"entidades del sistema\" o necesite alinear vocabulario antes de definir features.",
+  "files": [
+    "SKILL.md"
+  ],
+  "produces": [
+    {
+      "artifact": "domain-model"
+    }
+  ],
+  "consumes": [
+    {
+      "artifact": "problem-framing"
+    },
+    {
+      "artifact": "stakeholders"
+    }
+  ]
+}

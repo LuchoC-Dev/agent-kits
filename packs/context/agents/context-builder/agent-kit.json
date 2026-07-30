@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "id": "context/context-builder",
+  "type": "agent",
+  "version": "1.0.0",
+  "description": "Orquesta el workflow context-building para construir contexto del producto antes de cualquier diseño o implementación. Genera docs/context/ con problema, stakeholders, dominio, jobs, visión y riesgos.",
+  "dependencies": [
+    {
+      "id": "artifact-validator"
+    },
+    {
+      "id": "assumptions-risks"
+    },
+    {
+      "id": "context/context-building"
+    },
+    {
+      "id": "domain-modeling"
+    },
+    {
+      "id": "job-stories"
+    },
+    {
+      "id": "problem-framing"
+    },
+    {
+      "id": "stakeholders-map"
+    },
+    {
+      "id": "vision"
+    }
+  ],
+  "files": [
+    "context-builder.md"
+  ]
+}
