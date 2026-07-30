@@ -1,33 +1,42 @@
 {
   "schema_version": 1,
-  "id": "context",
+  "id": "72fbeb34-2994-4ae2-ba6b-1b28f9168b42",
+  "name": "context",
   "type": "kit",
   "version": "0.3.0",
   "description": "Pack de construcción de contexto pre-diseño. 6 áreas (problem framing, stakeholders, domain model, job stories, vision, assumptions \u0026 risks) con profundidad y cadencia de gate configurables. Genera docs/context/ que alimenta al pack `design`. Las metodologías de implementación (BDD/SDD/TDD) viven en otro pack — este es puro contexto.",
   "dependencies": [
     {
-      "id": "assumptions-risks"
+      "id": "d565b4e5-98ff-459d-85ae-9683d098a0a8",
+      "name": "assumptions-risks"
     },
     {
-      "id": "context/context-builder"
+      "id": "f5300dc5-f7b0-40bd-a828-8870b1326867",
+      "name": "context-builder"
     },
     {
-      "id": "context/context-building"
+      "id": "9c14d89f-c2f6-4282-8202-1cb922318858",
+      "name": "context-building"
     },
     {
-      "id": "domain-modeling"
+      "id": "87f1e965-f8f3-4412-86c0-2351e98685ae",
+      "name": "domain-modeling"
     },
     {
-      "id": "job-stories"
+      "id": "48b67728-169d-4973-becd-b7eb8ed5cffa",
+      "name": "job-stories"
     },
     {
-      "id": "problem-framing"
+      "id": "0741cdb9-448a-4927-82f9-02259c9e5998",
+      "name": "problem-framing"
     },
     {
-      "id": "stakeholders-map"
+      "id": "2b50fa7b-fec0-476b-ab77-64f49f66a5aa",
+      "name": "stakeholders-map"
     },
     {
-      "id": "vision"
+      "id": "11c6c46a-80e5-45bc-9980-f3f338a8430a",
+      "name": "vision"
     }
   ],
   "files": [

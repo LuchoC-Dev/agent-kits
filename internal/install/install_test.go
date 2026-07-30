@@ -101,19 +101,19 @@ func (h *harness) apply(refs ...string) *Report {
 func sampleKit() []internaltest.Resource {
 	return []internaltest.Resource{
 		{
-			ID: "problem-framing", Type: model.TypeSkill, Version: "1.0.0",
+			Name: "problem-framing", Type: model.TypeSkill, Version: "1.0.0",
 			Files: map[string]string{"SKILL.md": "# framing\n"},
 		},
 		{
-			ID: "context/context-builder", Type: model.TypeAgent, Version: "1.0.0",
+			Name: "context-builder", Type: model.TypeAgent, Version: "1.0.0",
 			Files: map[string]string{"context-builder.md": "# builder\n"},
 		},
 		{
-			ID: "context", Type: model.TypeKit, Version: "1.0.0",
+			Name: "context", Type: model.TypeKit, Version: "1.0.0",
 			Files: map[string]string{"pack.md": "# pack\n"},
 			Dependencies: []model.Dependency{
 				internaltest.Dep("problem-framing"),
-				internaltest.Dep("context/context-builder"),
+				internaltest.Dep("context-builder"),
 			},
 		},
 	}
@@ -150,7 +150,7 @@ func TestApplyInstallsFilesAndLock(t *testing.T) {
 		lock.Runtime != "claude-code" {
 		t.Fatalf("lock = %+v", lock)
 	}
-	kit, ok := lock.Find("context")
+	kit, ok := lock.FindByName("context")
 	if !ok || !kit.Requested || kit.Source != "public" || kit.Checksum == "" {
 		t.Errorf("kit record = %+v", kit)
 	}

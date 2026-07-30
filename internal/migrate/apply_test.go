@@ -28,19 +28,19 @@ func newHarness(t *testing.T) *harness {
 	sourceDir := t.TempDir()
 	internaltest.WriteNativeSource(t, sourceDir,
 		internaltest.Resource{
-			ID: "problem-framing", Type: model.TypeSkill, Version: "1.0.0",
+			Name: "problem-framing", Type: model.TypeSkill, Version: "1.0.0",
 			Files: map[string]string{"SKILL.md": "# framing\n"},
 		},
 		internaltest.Resource{
-			ID: "context/context-builder", Type: model.TypeAgent, Version: "1.0.0",
+			Name: "context-builder", Type: model.TypeAgent, Version: "1.0.0",
 			Files: map[string]string{"context-builder.md": "# builder\n"},
 		},
 		internaltest.Resource{
-			ID: "context", Type: model.TypeKit, Version: "1.0.0",
+			Name: "context", Type: model.TypeKit, Version: "1.0.0",
 			Files: map[string]string{"pack.md": "# pack\n"},
 			Dependencies: []model.Dependency{
 				internaltest.Dep("problem-framing"),
-				internaltest.Dep("context/context-builder"),
+				internaltest.Dep("context-builder"),
 			},
 		},
 	)
@@ -149,9 +149,11 @@ func TestApplyMigratesAnInheritedWorkspace(t *testing.T) {
 	if err := json.Unmarshal(lock.Migration.Extra["notes_from_another_tool"], &notes); err != nil || !notes.Keep {
 		t.Errorf("an unknown field was dropped: %v (%v)", lock.Migration.Extra, err)
 	}
-	// The bare agent name in workspace.json resolves to its qualified canonical id.
-	if _, ok := lock.Find("context/context-builder"); !ok {
-		t.Errorf("context/context-builder was not adopted: %+v", lock.Resources)
+	// The agent named in workspace.json is adopted under its install name, and the record
+	// carries the identity the catalog assigns it.
+	adopted, ok := lock.FindByName("context-builder")
+	if !ok || adopted.ID == "" {
+		t.Errorf("context-builder was not adopted: %+v", lock.Resources)
 	}
 	// The installed content itself is never touched by a migration.
 	if got := internaltest.ReadFile(t, h.project, ".agents/skills/problem-framing/SKILL.md"); got != "# framing\n" {

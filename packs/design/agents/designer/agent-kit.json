@@ -1,51 +1,66 @@
 {
   "schema_version": 1,
-  "id": "design/designer",
+  "id": "800432c9-4bae-41d9-b223-8e50f1deb9da",
+  "name": "designer",
   "type": "agent",
   "version": "1.0.0",
   "description": "Diseñador que orquesta el workflow pre-build-design en cualquiera de sus 3 modos (Basic, Medium, Advanced). Genera documentación de diseño en docs/design/ antes de implementar. Aplica a frontend, mobile y productos digitales en general.",
   "dependencies": [
     {
-      "id": "accessibility-plan"
+      "id": "a99e9549-550b-4692-8da0-903c02504b72",
+      "name": "accessibility-plan"
     },
     {
-      "id": "artifact-validator"
+      "id": "c348d043-be1e-4d71-b695-de5cd3350f4f",
+      "name": "artifact-validator"
     },
     {
-      "id": "component-inventory"
+      "id": "180f7c02-dad1-464f-872d-d070f8f29545",
+      "name": "component-inventory"
     },
     {
-      "id": "design-critic"
+      "id": "b07f734a-0788-410b-9f44-a179439ef0c8",
+      "name": "design-critic"
     },
     {
-      "id": "design-system-tokens"
+      "id": "70a40a2a-9466-4c4c-a3e9-70863028bf03",
+      "name": "design-system-tokens"
     },
     {
-      "id": "design/pre-build-design"
+      "id": "150fab8a-878d-405f-9928-c0635a3e4c66",
+      "name": "pre-build-design"
     },
     {
-      "id": "discovery"
+      "id": "9ce2abb5-83dd-4308-957a-47d047b9d220",
+      "name": "discovery"
     },
     {
-      "id": "information-architecture"
+      "id": "87d7ec08-09b1-435d-a59f-36b20e359228",
+      "name": "information-architecture"
     },
     {
-      "id": "performance-budget"
+      "id": "e6ba50a9-97b9-412b-a143-6b58d4fff10e",
+      "name": "performance-budget"
     },
     {
-      "id": "research-scout"
+      "id": "2baa45a7-214c-4800-88b0-61ec3a7f01ae",
+      "name": "research-scout"
     },
     {
-      "id": "tech-decisions"
+      "id": "226a56ca-f4a7-4ff5-915e-de0019386933",
+      "name": "tech-decisions"
     },
     {
-      "id": "user-flows"
+      "id": "8eaaf9b2-9256-41c8-a36a-3ae42b687492",
+      "name": "user-flows"
     },
     {
-      "id": "wireframe-renderer"
+      "id": "442e6231-16a0-41b4-aa07-d50a97ec6cdc",
+      "name": "wireframe-renderer"
     },
     {
-      "id": "wireframes"
+      "id": "26c51fea-a3c3-44dd-a2d3-529512f9d832",
+      "name": "wireframes"
     }
   ],
   "files": [

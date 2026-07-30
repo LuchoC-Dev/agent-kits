@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "sdd-verify",
+  "id": "8cbc9f50-3fef-4fda-834c-0f48fe8db0c4",
+  "name": "sdd-verify",
   "type": "skill",
   "version": "2.0.0",
   "description": "Validate that implementation matches specs, design, and tasks. Trigger: When the orchestrator launches you to verify a completed (or partially completed) change.",

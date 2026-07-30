@@ -168,7 +168,11 @@ mismo parser que los manifests.
 
 ## D-019 — Gramática de IDs canónicos con propiedad de kit
 
-**Estado:** Accepted
+**Estado:** Superseded por D-035 y D-036
+
+> La propiedad de kit resolvía las colisiones de nombre, pero ataba la identidad a una
+> relación que cambia. D-035 la reemplaza por un UUID estable y D-036 convierte el nombre
+> en un atributo renombrable.
 
 Un ID canónico tiene dos formas:
 
@@ -408,6 +412,135 @@ Consecuencias operativas, decididas junto con la lista:
 **No decide** qué recursos sobrevivirán a una poda futura: esa sigue siendo una decisión
 del usuario, ahora sin bloquear la retirada del legado.
 
+## D-035 — La identidad de un recurso es un UUID
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+**Reemplaza:** D-019
+**Refina:** D-006
+
+Un recurso se identifica con un **UUID v4** estable, asignado una sola vez y para siempre.
+El nombre, el tipo, la versión, la source y la pertenencia a un kit son atributos que
+pueden cambiar sin que cambie la identidad.
+
+**Razón:** D-019 ató la identidad a la pertenencia a un kit (`<kit>/<name>`), pero esa
+pertenencia es una **relación**, no una propiedad: un recurso puede pasar de un kit a otro,
+o dejar de pertenecer a ninguno. Con IDs calificados, mover `frontend-design` del kit
+`frontend` al kit `design` cambiaría su identidad y rompería todo lockfile que lo
+referencie. Un UUID desacopla las dos cosas.
+
+**Consecuencias:**
+
+- `D-006` se cumple por construcción: dos recursos no pueden compartir UUID.
+- La pertenencia a un kit pasa a expresarse como dependencia, igual que cualquier otra.
+- Un recurso publicado conserva su UUID, así que "el mismo recurso en el privado y en el
+  público" es un hecho verificable y no una coincidencia de nombres (ver D-038).
+- Renombrar un recurso deja de ser una operación destructiva.
+
+## D-036 — El nombre es el nombre de instalación
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+
+Cada recurso declara un `name` en kebab-case. Ese nombre es, a la vez:
+
+- cómo se lo pide (`agent-kits install frontend-design`);
+- dónde aterriza al instalar (`.agents/skills/frontend-design/`).
+
+No lleva prefijo de kit ni de source. El nombre legible para humanos vive aparte, en
+`title`.
+
+**Unicidad:** el nombre es único **dentro de una source**. Entre sources distintas puede
+repetirse: dos organizaciones pueden publicar cada una su `frontend-design` y son recursos
+distintos, con UUIDs distintos.
+
+**Referencias:**
+
+| Forma | Cuándo |
+|---|---|
+| `frontend-design` | el nombre identifica un solo recurso entre las sources configuradas |
+| `acme:frontend-design` | varias sources traen ese nombre |
+| `9f2c…b41e` | el UUID siempre funciona, sin ambigüedad posible |
+
+Una referencia ambigua devuelve `ambiguous_id` y lista los candidatos calificados por
+source. No se reusa ningún código de error nuevo: la ambigüedad ya tenía el suyo.
+
+**Dos recursos con el mismo nombre de instalación no pueden coexistir en un proyecto**,
+porque dos archivos no pueden ocupar la misma ruta. Eso sigue siendo `destination_conflict`
+(D-028) y se resuelve renombrando, que ahora es barato.
+
+## D-037 — Topología: la herramienta y el catálogo viven separados
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+**Cierra:** la pregunta abierta 10 (`origin`)
+
+Tres repositorios:
+
+| Repositorio | Contenido | Visibilidad |
+|---|---|---|
+| este | la CLI (`cmd/`, `internal/`, `docs/`) | público |
+| `<owner>/repository-private` | el catálogo completo | privado |
+| `<owner>/repository` | el subconjunto publicado del catálogo | público |
+
+**Razón:** publicar es una operación sobre **contenido**, no sobre código. Mientras el
+catálogo viva junto a la CLI, cada commit de la herramienta es también un commit del
+catálogo y viceversa, y la publicación no puede razonarse por separado.
+
+Los 75 recursos actuales se mudan al repositorio privado.
+
+## D-038 — Todo recurso nace privado; el público es un subconjunto publicado
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+**Refina:** D-005, D-007
+
+Invariante: **privado ⊇ público**. Todo lo que existe en el público existe también en el
+privado; lo inverso no. Nada entra al público sin una publicación explícita.
+
+**Razón:** es la única disposición en la que una filtración requiere un acto deliberado. Si
+un recurso pudiera nacer público, bastaría un error de destino para exponerlo.
+
+**Consecuencia sobre la unicidad:** un recurso publicado existe en las dos sources a la
+vez. Eso no es un duplicado: es el mismo recurso, y se prueba porque comparten UUID
+(D-035). Para que la vista agregada no lo trate como error de integridad, una source puede
+declarar que **es el espejo publicado de otra**:
+
+```json
+{ "name": "public", "url": "…/repository.git", "publishes": "private" }
+```
+
+Entre dos sources emparentadas así, un UUID repetido es esperado y gana el **origen
+privado**, que por construcción está igual o más adelantado. Entre sources **no**
+emparentadas, un UUID repetido sigue siendo `registry_integrity_error`.
+
+La precedencia deja de ser un desempate implícito —lo que D-006 prohíbe— y pasa a ser una
+relación declarada por quien configura las sources.
+
+## D-039 — La publicación la ejecuta CI, no la CLI
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+**Preserva:** D-003, D-004
+
+Publicar es un workflow de CI en el repositorio privado que abre un **pull request** contra
+el público. La CLI no adquiere ninguna capacidad de escritura remota: su lista blanca de
+subcomandos de Git sigue siendo de solo lectura y `version --json` sigue informando
+`remote_writes: false`.
+
+**Razón:** una CLI capaz de hacer push al repositorio público convierte el compromiso de
+una laptop —o de un agente con acceso a la herramienta— en una filtración pública. La
+credencial vive en CI, donde es auditable y revocable, y cada publicación queda como un PR
+revisable.
+
+**La publicación es transitiva.** Si lo que se publica depende de recursos privados, esos
+recursos se publican con él: un recurso público con una dependencia privada sería
+ininstalable. Por eso el PR debe enumerar el **cierre completo**, separando lo pedido de lo
+arrastrado, para que aprobarlo sea una decisión informada y no un trámite.
+
+Antes de abrir el PR, CI ejecuta el escaneo de secretos sobre el contenido a publicar. Un
+match de alta confianza cancela la publicación.
+
 ## Decisiones todavía necesarias
 
 - ubicación definitiva del registro global de reserva de IDs para sources remotas
@@ -415,5 +548,4 @@ del usuario, ahora sin bloquear la retirada del legado.
 - rangos de versión compuestos;
 - firma criptográfica de sources;
 - adaptador de Codex;
-- topología del repositorio colaborativo (`origin`);
 - qué recursos podar del catálogo cuando el uso real lo informe (D-034 conservó todos).

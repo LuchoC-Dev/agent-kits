@@ -1,21 +1,26 @@
 {
   "schema_version": 1,
-  "id": "backend/environment-bootstrap",
+  "id": "88f8dee6-23e0-48bf-97ed-8eaf642c6740",
+  "name": "environment-bootstrap",
   "type": "workflow",
   "version": "1.0.0",
   "description": "Setup inicial del entorno de desarrollo, staging y producción para un proyecto backend nuevo.",
   "dependencies": [
     {
-      "id": "build-progress"
+      "id": "d6a12d9c-6620-4d48-a214-21f290e3a49a",
+      "name": "build-progress"
     },
     {
-      "id": "docker-expert"
+      "id": "8172f61e-d176-4366-afb3-817032103847",
+      "name": "docker-expert"
     },
     {
-      "id": "environment-setup"
+      "id": "3a33c2e8-479f-46d4-9749-8611eea88502",
+      "name": "environment-setup"
     },
     {
-      "id": "taskfile-setup"
+      "id": "3569f9e4-61a6-459f-b6cc-453ee4a6f270",
+      "name": "taskfile-setup"
     }
   ],
   "files": [

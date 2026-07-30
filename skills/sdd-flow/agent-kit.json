@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "id": "sdd-flow",
+  "id": "3c4ce9d7-26fe-4529-81d0-49a8124da66c",
+  "name": "sdd-flow",
   "type": "skill",
-  "name": "engram-sdd-flow",
   "version": "1.0.0",
   "description": "Spec-Driven Development workflow for Engram. Trigger: When user requests SDD or multi-phase implementation planning.",
   "files": [

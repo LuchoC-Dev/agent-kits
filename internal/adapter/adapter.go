@@ -53,17 +53,19 @@ func (a workspaceAdapter) LockPath() string { return WorkspaceDir + "/" + LockNa
 func (a workspaceAdapter) Destination(res *model.Resource, rel string) (string, error) {
 	clean := strings.TrimPrefix(strings.ReplaceAll(rel, `\`, "/"), "./")
 	if clean == "" {
-		return "", errs.New(errs.CodeUnsafePath, "resource %s declares an empty file path", res.ID)
+		return "", errs.New(errs.CodeUnsafePath, "resource %s declares an empty file path", res.Name)
 	}
+	// The destination comes from the install name, never from the identity: a UUID would
+	// make a workspace unreadable, and the name is exactly what the user asked for (D-036).
 	switch res.Type {
 	case model.TypeSkill:
-		return join(WorkspaceDir, "skills", res.ID.Name(), clean), nil
+		return join(WorkspaceDir, "skills", res.Name, clean), nil
 	case model.TypeAgent:
 		return join(WorkspaceDir, "agents", clean), nil
 	case model.TypeWorkflow:
 		return join(WorkspaceDir, "workflows", clean), nil
 	case model.TypeKit:
-		return join(WorkspaceDir, "packs", res.ID.Name(), clean), nil
+		return join(WorkspaceDir, "packs", res.Name, clean), nil
 	}
 	return "", errs.New(errs.CodeRuntimeUnsupported,
 		"runtime %s cannot place a resource of type %q", a.name, res.Type)

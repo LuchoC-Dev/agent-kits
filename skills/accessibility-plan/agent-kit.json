@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "accessibility-plan",
+  "id": "a99e9549-550b-4692-8da0-903c02504b72",
+  "name": "accessibility-plan",
   "type": "skill",
   "version": "1.0.0",
   "description": "Define el plan de accesibilidad WCAG AA del proyecto — contraste, navegación por teclado, ARIA, focus management, screen readers. Trigger cuando el usuario quiera \"plan de accesibilidad\", \"a11y\", \"WCAG\", \"navegación por teclado\", \"aria labels\" o necesite definir el contrato de accesibilidad antes de implementar.",

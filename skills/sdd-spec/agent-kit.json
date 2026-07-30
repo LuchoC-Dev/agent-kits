@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "sdd-spec",
+  "id": "283418b2-02a9-4d6c-9144-e6e8f22f1956",
+  "name": "sdd-spec",
   "type": "skill",
   "version": "2.0.0",
   "description": "Write specifications with requirements and scenarios (delta specs for changes). Trigger: When the orchestrator launches you to write or update specs for a change.",

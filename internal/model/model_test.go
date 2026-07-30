@@ -7,78 +7,133 @@ import (
 	"github.com/LuchoC-Dev/agent-kits/internal/errs"
 )
 
+const sampleID = "9f2c1b7a-9d84-4e11-b6f2-77c1a9e0d512"
+
 func TestParseID(t *testing.T) {
-	valid := []string{"frontend-design", "sdd", "backend/feature-development", "a1/b2-c3"}
+	valid := []string{sampleID, "3F1C2B7A-9D84-4E11-B6F2-77C1A9E0D512"}
 	for _, input := range valid {
 		if _, err := ParseID(input); err != nil {
 			t.Errorf("ParseID(%q) returned %v", input, err)
 		}
 	}
+	// An id is a UUID. A name, however well formed, is not an identity (D-035).
 	invalid := []string{
-		"", "Frontend", "front_end", "-leading", "trailing-", "a//b",
-		"a/b/c", "a b", "../escape", "kit/", "/name",
+		"", "frontend-design", "backend/feature-development", "9f2c1b7a9d844e11b6f277c1a9e0d512",
+		"9f2c1b7a-9d84-4e11-b6f2", "zzzzzzzz-9d84-4e11-b6f2-77c1a9e0d512",
 	}
 	for _, input := range invalid {
 		if _, err := ParseID(input); err == nil {
 			t.Errorf("ParseID(%q) accepted an invalid id", input)
 		}
 	}
-}
-
-func TestIDOwnerAndName(t *testing.T) {
-	global := ID("frontend-design")
-	if global.Qualified() || global.Owner() != "" || global.Name() != "frontend-design" {
-		t.Errorf("global id parts are wrong: %v %q %q", global.Qualified(), global.Owner(), global.Name())
-	}
-	owned := ID("backend/feature-development")
-	if !owned.Qualified() || owned.Owner() != "backend" || owned.Name() != "feature-development" {
-		t.Errorf("owned id parts are wrong: %v %q %q", owned.Qualified(), owned.Owner(), owned.Name())
+	// Identities normalise to lower case, so two spellings are one identity.
+	upper, _ := ParseID("3F1C2B7A-9D84-4E11-B6F2-77C1A9E0D512")
+	if upper != ID("3f1c2b7a-9d84-4e11-b6f2-77c1a9e0d512") {
+		t.Errorf("ParseID did not normalise: %s", upper)
 	}
 }
 
-func TestIDMatches(t *testing.T) {
-	owned := ID("backend/feature-development")
-	if !owned.Matches("backend/feature-development") {
-		t.Error("an id must match its own canonical form")
+func TestParseName(t *testing.T) {
+	for _, input := range []string{"frontend-design", "sdd", "a1-b2-c3"} {
+		if _, err := ParseName(input); err != nil {
+			t.Errorf("ParseName(%q) returned %v", input, err)
+		}
 	}
-	if !owned.Matches("feature-development") {
-		t.Error("an owned id must match its bare name")
+	// A name carries no namespace: no kit prefix and no source prefix (D-036).
+	invalid := []string{
+		"", "Frontend", "front_end", "-leading", "trailing-",
+		"backend/feature-development", "public:tdd", "a b",
 	}
-	if owned.Matches("frontend/feature-development") {
-		t.Error("an owned id must not match another owner's qualified id")
-	}
-	if ID("frontend-design").Matches("design") {
-		t.Error("a bare name must match the whole segment, not a suffix")
+	for _, input := range invalid {
+		if _, err := ParseName(input); err == nil {
+			t.Errorf("ParseName(%q) accepted an invalid name", input)
+		}
 	}
 }
+
+// The three reference forms of D-036.
+func TestParseReference(t *testing.T) {
+	byID, err := ParseReference(sampleID)
+	if err != nil || byID.ID != ID(sampleID) || byID.Name != "" || byID.Qualified() {
+		t.Errorf("ParseReference(uuid) = %+v, %v", byID, err)
+	}
+	bare, err := ParseReference("frontend-design")
+	if err != nil || bare.ID != "" || bare.Name != "frontend-design" || bare.Qualified() {
+		t.Errorf("ParseReference(name) = %+v, %v", bare, err)
+	}
+	qualified, err := ParseReference("acme:frontend-design")
+	if err != nil || !qualified.Qualified() || qualified.Source != "acme" ||
+		qualified.Name != "frontend-design" {
+		t.Errorf("ParseReference(source:name) = %+v, %v", qualified, err)
+	}
+	if qualified.String() != "acme:frontend-design" || bare.String() != "frontend-design" ||
+		byID.String() != sampleID {
+		t.Error("a reference must render the way it was written")
+	}
+	for _, bad := range []string{"", ":tdd", "acme:", "acme:Bad-Name"} {
+		if _, err := ParseReference(bad); err == nil {
+			t.Errorf("ParseReference(%q) accepted an invalid reference", bad)
+		}
+	}
+}
+
+func TestLooksLikeIDRoutesReferences(t *testing.T) {
+	if !LooksLikeID(sampleID) || LooksLikeID("frontend-design") || LooksLikeID("acme:tdd") {
+		t.Error("LooksLikeID must separate an identity from a name")
+	}
+}
+
+func TestNewIDIsUniqueAndParseable(t *testing.T) {
+	first, err := NewID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, _ := NewID()
+	if first == second {
+		t.Error("two identities must differ")
+	}
+	if _, err := ParseID(string(first)); err != nil {
+		t.Errorf("a generated id must parse: %v", err)
+	}
+	if len(first.Short()) != 8 {
+		t.Errorf("Short() = %q", first.Short())
+	}
+}
+
+const otherID = "3f1c2b7a-9d84-4e11-b6f2-77c1a9e0d512"
 
 func TestManifestValidate(t *testing.T) {
 	base := func() Manifest {
 		return Manifest{
 			SchemaVersion: ManifestSchemaVersion,
-			ID:            "example",
+			ID:            sampleID,
+			Name:          "example",
 			Type:          TypeSkill,
 			Version:       "1.0.0",
 			Files:         []string{"SKILL.md"},
 		}
 	}
-	if err := (&Manifest{
-		ID: "example", Type: TypeSkill, Version: "1.0.0", Files: []string{"SKILL.md"},
-	}).Validate(); err != nil {
+	valid := base()
+	valid.SchemaVersion = 0
+	if err := valid.Validate(); err != nil {
 		t.Errorf("a missing schema_version should default, got %v", err)
 	}
 
 	cases := map[string]func(*Manifest){
 		"unsupported schema": func(m *Manifest) { m.SchemaVersion = 99 },
+		"missing id":         func(m *Manifest) { m.ID = "" },
+		"name as id":         func(m *Manifest) { m.ID = "example" },
+		"missing name":       func(m *Manifest) { m.Name = "" },
+		"qualified name":     func(m *Manifest) { m.Name = "backend/example" },
 		"bad type":           func(m *Manifest) { m.Type = "tool" },
 		"bad version":        func(m *Manifest) { m.Version = "1.0" },
 		"no files":           func(m *Manifest) { m.Files = nil },
-		"self dependency":    func(m *Manifest) { m.Dependencies = []Dependency{{ID: "example"}} },
+		"self dependency":    func(m *Manifest) { m.Dependencies = []Dependency{{ID: sampleID}} },
 		"duplicate dep": func(m *Manifest) {
-			m.Dependencies = []Dependency{{ID: "other"}, {ID: "other"}}
+			m.Dependencies = []Dependency{{ID: otherID}, {ID: otherID}}
 		},
 		"bad constraint": func(m *Manifest) {
-			m.Dependencies = []Dependency{{ID: "other", Version: ">=1 <2"}}
+			m.Dependencies = []Dependency{{ID: otherID, Version: ">=1 <2"}}
 		},
 	}
 	for name, mutate := range cases {
@@ -95,26 +150,43 @@ func TestManifestValidate(t *testing.T) {
 	}
 }
 
+// The human label is presentation only; the install name is the fallback.
+func TestDisplayName(t *testing.T) {
+	plain := Manifest{Name: "frontend-design"}
+	if plain.DisplayName() != "frontend-design" {
+		t.Errorf("DisplayName = %q", plain.DisplayName())
+	}
+	titled := Manifest{Name: "frontend-design", Title: "Frontend Design"}
+	if titled.DisplayName() != "Frontend Design" {
+		t.Errorf("DisplayName = %q", titled.DisplayName())
+	}
+}
+
 func TestDependencyUnmarshalAcceptsBothForms(t *testing.T) {
 	var shorthand Dependency
-	if err := json.Unmarshal([]byte(`"tdd"`), &shorthand); err != nil {
+	if err := json.Unmarshal([]byte(`"`+sampleID+`"`), &shorthand); err != nil {
 		t.Fatalf("shorthand form returned %v", err)
 	}
-	if shorthand.ID != "tdd" || shorthand.Version != "" {
+	if shorthand.ID != ID(sampleID) || shorthand.Version != "" {
 		t.Errorf("shorthand = %+v", shorthand)
 	}
 
 	var explicit Dependency
-	if err := json.Unmarshal([]byte(`{"id":"tdd","version":"^1.0.0"}`), &explicit); err != nil {
+	if err := json.Unmarshal([]byte(`{"id":"`+sampleID+`","name":"tdd","version":"^1.0.0"}`),
+		&explicit); err != nil {
 		t.Fatalf("explicit form returned %v", err)
 	}
-	if explicit.ID != "tdd" || explicit.Version != "^1.0.0" {
+	if explicit.ID != ID(sampleID) || explicit.Name != "tdd" || explicit.Version != "^1.0.0" {
 		t.Errorf("explicit = %+v", explicit)
+	}
+	// The recorded name is for humans; the label falls back to the identity without one.
+	if explicit.Label() != "tdd" || shorthand.Label() != sampleID[:8] {
+		t.Errorf("labels = %q, %q", explicit.Label(), shorthand.Label())
 	}
 
 	var invalid Dependency
-	if err := json.Unmarshal([]byte(`{"id":"NOPE"}`), &invalid); err == nil {
-		t.Error("an invalid id was accepted")
+	if err := json.Unmarshal([]byte(`{"id":"tdd"}`), &invalid); err == nil {
+		t.Error("a name was accepted as an identity")
 	}
 }
 
@@ -147,19 +219,29 @@ func TestPlanEmptyIgnoresMetadataAndUnchanged(t *testing.T) {
 }
 
 func TestLockRoundTrip(t *testing.T) {
+	const idA, idB = sampleID, otherID
 	lock := NewLock("claude-code")
 	lock.Upsert(LockResource{
-		ID: "b", Type: TypeSkill, Version: "1.0.0", Checksum: "sha256:x",
+		ID: idB, Name: "b", Type: TypeSkill, Version: "1.0.0", Checksum: "sha256:x",
 		Files: []LockFile{{Path: ".agents/skills/b/SKILL.md", Checksum: "sha256:y"}},
 	})
-	lock.Upsert(LockResource{ID: "a", Type: TypeSkill, Version: "1.0.0", Checksum: "sha256:z"})
+	lock.Upsert(LockResource{
+		ID: idA, Name: "a", Type: TypeSkill, Version: "1.0.0", Checksum: "sha256:z",
+	})
 
-	if lock.Resources[0].ID != "a" {
-		t.Errorf("Upsert must keep resources sorted, got %s first", lock.Resources[0].ID)
+	// The lockfile is ordered by name, so its diff reads like a diff of the project.
+	if lock.Resources[0].Name != "a" {
+		t.Errorf("Upsert must keep resources sorted by name, got %s first", lock.Resources[0].Name)
 	}
 	owner, checksum, ok := lock.FileOwner(".agents/skills/b/SKILL.md")
-	if !ok || owner != "b" || checksum != "sha256:y" {
+	if !ok || owner != ID(idB) || checksum != "sha256:y" {
 		t.Errorf("FileOwner = %s, %s, %v", owner, checksum, ok)
+	}
+	if record, found := lock.FindByName("b"); !found || record.ID != ID(idB) {
+		t.Errorf("FindByName = %+v, %v", record, found)
+	}
+	if _, found := lock.FindByName("nothing"); found {
+		t.Error("FindByName invented a record")
 	}
 
 	clone := lock.Clone()
@@ -168,7 +250,7 @@ func TestLockRoundTrip(t *testing.T) {
 		t.Error("Clone must not share resource storage")
 	}
 
-	if !lock.Delete("a") || lock.Delete("a") {
+	if !lock.Delete(idA) || lock.Delete(idA) {
 		t.Error("Delete must report whether the record existed")
 	}
 	if err := lock.Validate(); err != nil {

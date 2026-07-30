@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "environment-setup",
+  "id": "3a33c2e8-479f-46d4-9749-8611eea88502",
+  "name": "environment-setup",
   "type": "skill",
   "version": "1.0.0",
   "description": "Configure and manage development, staging, production, and test environments. Use when setting up environment variables, managing configurations, or separating environments. Handles .env files, .env.test, config management, and environment-specific settings. Always use this skill when the user mentions env files, environment variables, .env.test, test environment config, or wants to separate environments — even if they just ask to \"add a test env\" or \"configure testing variables\".",

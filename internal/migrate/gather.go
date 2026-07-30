@@ -120,14 +120,14 @@ func unresolved(candidate importCandidate, err error) Adoption {
 func verify(in Input, candidate importCandidate, res *model.Resource) Adoption {
 	out := Adoption{Ref: candidate.ref}
 	record := model.LockResource{
-		ID: res.ID, Type: res.Type, Source: res.Source,
+		ID: res.ID, Name: res.Name, Type: res.Type, Source: res.Source,
 		Version: res.Version, Commit: res.Commit, Requested: candidate.requested,
 	}
 	perFile := map[string]string{}
 
 	fail := func(code errs.Code, path, message string) Adoption {
 		out.Blocking = append(out.Blocking, model.Diagnostic{
-			Code: code, Ref: string(res.ID), Path: path, Message: message,
+			Code: code, Ref: res.Name, Path: path, Message: message,
 		})
 		return out
 	}
@@ -145,7 +145,7 @@ func verify(in Input, candidate importCandidate, res *model.Resource) Adoption {
 			message := "not adopted: the workspace does not contain this file"
 			if !candidate.declared {
 				out.Warnings = append(out.Warnings, model.Diagnostic{
-					Code: errs.CodeNotInstalled, Ref: string(res.ID), Path: dest, Message: message,
+					Code: errs.CodeNotInstalled, Ref: res.Name, Path: dest, Message: message,
 				})
 				return Adoption{Ref: candidate.ref, Warnings: out.Warnings}
 			}
@@ -185,7 +185,7 @@ func checksumSource(res *model.Resource, rel string) (string, error) {
 	}
 	content, err := os.ReadFile(filepath.Join(res.Root, fsutil.FromSlash(rel)))
 	if err != nil {
-		return "", errs.Wrap(errs.CodeSourceUnavailable, err, "cannot read %s of %s", rel, res.ID)
+		return "", errs.Wrap(errs.CodeSourceUnavailable, err, "cannot read %s of %s", rel, res.Name)
 	}
 	return fsutil.ChecksumBytes(content), nil
 }

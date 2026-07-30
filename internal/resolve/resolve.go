@@ -76,7 +76,7 @@ func (r *Resolver) Resolve(refs []string) (*Result, error) {
 
 	marks := map[model.ID]mark{}
 	var order []*model.Resource
-	var path []model.ID
+	var path []string
 
 	var visit func(res *model.Resource) error
 	visit = func(res *model.Resource) error {
@@ -89,11 +89,11 @@ func (r *Resolver) Resolve(refs []string) (*Result, error) {
 			// ordering. Mutual references are also legitimate in the inherited catalog: a
 			// workflow names its orchestrating agent and that agent names the workflow it
 			// runs (D-027).
-			result.Diagnostics = append(result.Diagnostics, cycleDiagnostic(append(path, res.ID)))
+			result.Diagnostics = append(result.Diagnostics, cycleDiagnostic(append(path, res.Name)))
 			return nil
 		}
 		marks[res.ID] = visiting
-		path = append(path, res.ID)
+		path = append(path, res.Name)
 
 		if err := r.checkRuntime(res); err != nil {
 			return err
@@ -102,10 +102,21 @@ func (r *Resolver) Resolve(refs []string) (*Result, error) {
 			child, ok := r.Catalog.Get(dep.ID)
 			if !ok {
 				return errs.New(errs.CodeDependencyMissing,
-					"%s depends on %s, which is not in any configured source", res.ID, dep.ID).
-					With("resource", string(res.ID)).
+					"%s depends on %s, which is not in any configured source", res.Name, dep.Label()).
+					With("resource", res.Name).
 					With("dependency", string(dep.ID)).
-					Hint("sync the source that provides %s, or retire the dependency", dep.ID)
+					Hint("sync the source that provides %s, or retire the dependency", dep.Label())
+			}
+			// A dependency may record the name its target had when the manifest was written.
+			// It is never used to resolve — identity is — but a mismatch means the manifest
+			// is stale, and saying so is more useful than ignoring it.
+			if dep.Name != "" && dep.Name != child.Name {
+				result.Diagnostics = append(result.Diagnostics, model.Diagnostic{
+					Code: errs.CodeInvalidManifest,
+					Ref:  res.Name,
+					Message: "declares a dependency on " + dep.Name +
+						", which has since been renamed to " + child.Name,
+				})
 			}
 			if err := checkConstraint(res, child, dep); err != nil {
 				return err
@@ -140,23 +151,19 @@ func sortedDeps(deps []model.Dependency) []model.Dependency {
 }
 
 // cycleDiagnostic describes a reference cycle, trimmed to the cycle itself.
-func cycleDiagnostic(path []model.ID) model.Diagnostic {
+func cycleDiagnostic(path []string) model.Diagnostic {
 	last := path[len(path)-1]
 	start := 0
-	for i, id := range path {
-		if id == last {
+	for i, name := range path {
+		if name == last {
 			start = i
 			break
 		}
 	}
-	labels := make([]string, 0, len(path)-start)
-	for _, id := range path[start:] {
-		labels = append(labels, string(id))
-	}
 	return model.Diagnostic{
 		Code:    errs.CodeDependencyCycle,
-		Ref:     string(last),
-		Message: "mutual reference: " + strings.Join(labels, " -> "),
+		Ref:     last,
+		Message: "mutual reference: " + strings.Join(path[start:], " -> "),
 	}
 }
 
@@ -167,7 +174,7 @@ func checkConstraint(parent, child *model.Resource, dep model.Dependency) error 
 	constraint, err := dep.Constraint()
 	if err != nil {
 		return errs.Wrap(errs.CodeInvalidManifest, err,
-			"%s declares an invalid constraint for %s", parent.ID, dep.ID)
+			"%s declares an invalid constraint for %s", parent.Name, dep.Label())
 	}
 	if constraint.IsAny() {
 		return nil
@@ -177,8 +184,8 @@ func checkConstraint(parent, child *model.Resource, dep model.Dependency) error 
 	}
 	return errs.New(errs.CodeVersionConflict,
 		"%s requires %s %s, but the catalog provides %s",
-		parent.ID, dep.ID, constraint, child.Version).
-		With("resource", string(parent.ID)).
+		parent.Name, dep.Label(), constraint, child.Version).
+		With("resource", parent.Name).
 		With("dependency", string(dep.ID)).
 		With("required", constraint.String()).
 		With("available", child.Version)
@@ -190,10 +197,10 @@ func checkConstraint(parent, child *model.Resource, dep model.Dependency) error 
 func checkVisibility(parent, child *model.Resource) error {
 	if parent.Access == model.AccessPublic && child.Access == model.AccessPrivate {
 		return errs.New(errs.CodeVisibilityViolation,
-			"public resource %s depends on private resource %s", parent.ID, child.ID).
-			With("resource", string(parent.ID)).
-			With("dependency", string(child.ID)).
-			Hint("move %s to a public source or make %s private", child.ID, parent.ID)
+			"public resource %s depends on private resource %s", parent.Name, child.Name).
+			With("resource", parent.Name).
+			With("dependency", child.Name).
+			Hint("move %s to a public source or make %s private", child.Name, parent.Name)
 	}
 	return nil
 }
@@ -204,7 +211,7 @@ func (r *Resolver) checkRuntime(res *model.Resource) error {
 	}
 	return errs.New(errs.CodeRuntimeUnsupported,
 		"%s does not support runtime %q (declares %s)",
-		res.ID, r.Runtime, strings.Join(res.Runtimes, ", ")).
-		With("resource", string(res.ID)).
+		res.Name, r.Runtime, strings.Join(res.Runtimes, ", ")).
+		With("resource", res.Name).
 		With("runtime", r.Runtime)
 }

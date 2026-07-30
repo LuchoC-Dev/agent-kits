@@ -280,9 +280,10 @@ func adoptResources(out *Plan, proposed *model.Lock, state State) {
 		}
 		entry := *adoption.Record
 		if entry.InstalledAt == "" {
-			if when, ok := installedAt[string(entry.ID)]; ok {
+			// The inherited descriptor recorded install times by name, which is what it had.
+			if when, ok := installedAt[entry.Name]; ok {
 				entry.InstalledAt = when
-			} else if when, ok := installedAt[entry.ID.Name()]; ok {
+			} else if when, ok := installedAt[adoption.Ref]; ok {
 				entry.InstalledAt = when
 			} else {
 				entry.InstalledAt = stamp(state.Now)
@@ -290,13 +291,15 @@ func adoptResources(out *Plan, proposed *model.Lock, state State) {
 		}
 		proposed.Upsert(entry)
 		out.Adopted = append(out.Adopted, model.PlanResource{
-			ID: entry.ID, Type: entry.Type, Version: entry.Version,
+			ID: entry.ID, Name: entry.Name, Type: entry.Type, Version: entry.Version,
 			Source: entry.Source, Requested: entry.Requested, State: "adopt",
 		})
 	}
 	if len(out.Adopted) > 0 {
 		out.Preserved = append(out.Preserved, "resources.installed_at")
-		sort.SliceStable(out.Adopted, func(i, j int) bool { return out.Adopted[i].ID < out.Adopted[j].ID })
+		sort.SliceStable(out.Adopted, func(i, j int) bool {
+			return out.Adopted[i].Name < out.Adopted[j].Name
+		})
 	}
 }
 

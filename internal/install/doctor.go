@@ -109,21 +109,21 @@ func Doctor(in DoctorInput) (*DoctorReport, error) {
 			owned[file.Path] = true
 			abs, containErr := security.Contain(in.Project, file.Path)
 			if containErr != nil {
-				problem(errs.CodeUnsafePath, string(record.ID), file.Path, containErr.Error())
+				problem(errs.CodeUnsafePath, record.Name, file.Path, containErr.Error())
 				continue
 			}
 			if !fsutil.Exists(abs) {
-				problem(errs.CodeIntegrityMismatch, string(record.ID), file.Path,
+				problem(errs.CodeIntegrityMismatch, record.Name, file.Path,
 					"file recorded in the lockfile is missing")
 				continue
 			}
 			sum, _, sumErr := fsutil.ChecksumFile(abs)
 			if sumErr != nil {
-				problem(errs.CodeInternal, string(record.ID), file.Path, sumErr.Error())
+				problem(errs.CodeInternal, record.Name, file.Path, sumErr.Error())
 				continue
 			}
 			if sum != file.Checksum {
-				problem(errs.CodeLocalDivergence, string(record.ID), file.Path,
+				problem(errs.CodeLocalDivergence, record.Name, file.Path,
 					"file was modified after it was installed")
 			}
 		}
@@ -132,12 +132,12 @@ func Doctor(in DoctorInput) (*DoctorReport, error) {
 		}
 		current, found := in.Catalog.Get(record.ID)
 		if !found {
-			problem(errs.CodeNotFound, string(record.ID), "",
+			problem(errs.CodeNotFound, record.Name, "",
 				"installed resource is no longer offered by any configured source")
 			continue
 		}
 		if current.Version != record.Version {
-			note(errs.CodeNotFound, string(record.ID), "",
+			note(errs.CodeNotFound, record.Name, "",
 				"an update is available: "+record.Version+" -> "+current.Version)
 		}
 	}

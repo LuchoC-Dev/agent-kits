@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "sdd-design",
+  "id": "aef236c7-b770-43bf-9ceb-672e58ab910f",
+  "name": "sdd-design",
   "type": "skill",
   "version": "2.0.0",
   "description": "Create technical design document with architecture decisions and approach. Trigger: When the orchestrator launches you to write or update the technical design for a change.",

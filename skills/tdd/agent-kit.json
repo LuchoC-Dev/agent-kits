@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "tdd",
+  "id": "5c954f33-73e3-4c05-b1b0-9d72baff0182",
+  "name": "tdd",
   "type": "skill",
   "version": "1.0.0",
   "description": "Disciplina de ejecución Test-Driven Development — ciclo red → green → refactor. Escribir el test que falla antes que el código que lo hace pasar. Trigger cuando el proyecto tiene `tdd` en las disciplinas activas, o el usuario pide \"hacer TDD\", \"test primero\", \"red green refactor\", o está por implementar lógica con tests.",

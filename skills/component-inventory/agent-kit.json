@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "component-inventory",
+  "id": "180f7c02-dad1-464f-872d-d070f8f29545",
+  "name": "component-inventory",
   "type": "skill",
   "version": "1.0.0",
   "description": "Lista todos los componentes UI necesarios clasificados como atoms, molecules y organisms (Atomic Design). Trigger cuando el usuario quiera \"inventariar componentes\", \"listar componentes\", \"atomic design\", \"qué componentes necesito\" o esté por arrancar el desarrollo de UI y necesite la lista exhaustiva antes de codear.",

@@ -18,12 +18,16 @@ import (
 // Catalog is an aggregated, uniqueness-checked view of resources.
 type Catalog struct {
 	byID        map[model.ID]*model.Resource
+	byName      map[sourceName]*model.Resource
 	diagnostics []model.Diagnostic
 }
 
 // New returns an empty catalog.
 func New() *Catalog {
-	return &Catalog{byID: map[model.ID]*model.Resource{}}
+	return &Catalog{
+		byID:   map[model.ID]*model.Resource{},
+		byName: map[sourceName]*model.Resource{},
+	}
 }
 
 // Diagnostics returns non-fatal findings collected while loading.
@@ -37,20 +41,39 @@ func (c *Catalog) warn(code errs.Code, ref, message string) {
 	c.diagnostics = append(c.diagnostics, model.Diagnostic{Code: code, Ref: ref, Message: message})
 }
 
-// add inserts a resource, refusing to let a second resource claim the same canonical ID.
-// This is RF-03: a duplicate is an integrity error, never a candidate for precedence.
+// add inserts a resource, enforcing the two uniqueness rules the catalog rests on.
+//
+// An identity may appear only once (RF-03, D-006): a repeated UUID means two different
+// resources claim to be the same one, which is an integrity error and never a candidate
+// for precedence. A name may appear only once *within a source* (D-036): two sources may
+// each offer a `frontend-design`, and a caller disambiguates with `<source>:<name>`.
 func (c *Catalog) add(res *model.Resource) error {
 	if existing, clash := c.byID[res.ID]; clash {
 		return errs.New(errs.CodeRegistryIntegrity,
-			"canonical id %s is declared by two resources: %s/%s and %s/%s",
-			res.ID, existing.Source, existing.Type, res.Source, res.Type).
+			"identity %s is claimed by two resources: %s and %s",
+			res.ID, existing.Qualified(), res.Qualified()).
 			With("id", string(res.ID)).
 			With("sources", []string{existing.Source, res.Source}).
-			Hint("ids must be globally unique (D-006); rename one resource or retire it")
+			Hint("an identity is assigned once and never reused (D-035); " +
+				"give one of them a new id or retire it")
+	}
+	key := sourceName{source: res.Source, name: res.Name}
+	if existing, clash := c.byName[key]; clash {
+		return errs.New(errs.CodeRegistryIntegrity,
+			"source %s offers two resources named %s: %s and %s",
+			res.Source, res.Name, existing.ID.Short(), res.ID.Short()).
+			With("name", res.Name).
+			With("source", res.Source).
+			With("ids", []string{string(existing.ID), string(res.ID)}).
+			Hint("a name is unique within a source (D-036); rename one of them")
 	}
 	c.byID[res.ID] = res
+	c.byName[key] = res
 	return nil
 }
+
+// sourceName keys a resource by the pair that must be unique: its source and its name.
+type sourceName struct{ source, name string }
 
 // All returns every resource, ordered by type then id.
 func (c *Catalog) All() []*model.Resource {
@@ -75,6 +98,12 @@ func sortResources(list []*model.Resource) {
 		if list[i].Type != list[j].Type {
 			return rank(list[i].Type) < rank(list[j].Type)
 		}
+		if list[i].Name != list[j].Name {
+			return list[i].Name < list[j].Name
+		}
+		if list[i].Source != list[j].Source {
+			return list[i].Source < list[j].Source
+		}
 		return list[i].ID < list[j].ID
 	})
 }
@@ -88,42 +117,58 @@ func (c *Catalog) Get(id model.ID) (*model.Resource, bool) {
 	return res, ok
 }
 
-// Lookup resolves a user or agent reference to exactly one resource.
+// Lookup resolves a user or agent reference to exactly one resource (D-036).
 //
-// An exact canonical id always wins, because it is unambiguous by construction. Only when
-// the reference is a bare name does the catalog consider owned resources; if more than one
-// answers to that name the lookup fails with ambiguous_id and lists the candidates. No
-// tie is ever broken by source order (D-006).
+// A UUID always resolves directly: it is unambiguous by construction. A `<source>:<name>`
+// reference resolves within that source, where names are unique. A bare name is searched
+// across every configured source, and if more than one answers, the lookup fails with
+// ambiguous_id and lists the qualified candidates. No tie is ever broken by source order.
 func (c *Catalog) Lookup(ref string) (*model.Resource, error) {
-	trimmed := strings.TrimSpace(ref)
-	if trimmed == "" {
-		return nil, errs.New(errs.CodeUsage, "empty resource reference")
+	reference, err := model.ParseReference(ref)
+	if err != nil {
+		return nil, err
 	}
-	if res, ok := c.byID[model.ID(trimmed)]; ok {
+	if reference.ID != "" {
+		res, ok := c.byID[reference.ID]
+		if !ok {
+			return nil, errs.New(errs.CodeNotFound,
+				"no resource has the identity %s", reference.ID)
+		}
 		return res, nil
 	}
+	if reference.Qualified() {
+		res, ok := c.byName[sourceName{source: reference.Source, name: reference.Name}]
+		if !ok {
+			return nil, errs.New(errs.CodeNotFound,
+				"source %s offers no resource named %s", reference.Source, reference.Name).
+				Hint("run `agent-kits search %s` to list candidates", reference.Name)
+		}
+		return res, nil
+	}
+
 	var matches []*model.Resource
-	for _, res := range c.byID {
-		if res.ID.Matches(trimmed) {
+	for key, res := range c.byName {
+		if key.name == reference.Name {
 			matches = append(matches, res)
 		}
 	}
 	switch len(matches) {
 	case 0:
-		return nil, errs.New(errs.CodeNotFound, "no resource matches %q", trimmed).
-			Hint("run `agent-kits search %s` to list candidates", trimmed)
+		return nil, errs.New(errs.CodeNotFound, "no resource is named %q", reference.Name).
+			Hint("run `agent-kits search %s` to list candidates", reference.Name)
 	case 1:
 		return matches[0], nil
 	}
 	sortResources(matches)
 	candidates := make([]string, 0, len(matches))
 	for _, res := range matches {
-		candidates = append(candidates, string(res.ID))
+		candidates = append(candidates, res.Qualified())
 	}
 	return nil, errs.New(errs.CodeAmbiguousID,
-		"%q matches %d resources: %s", trimmed, len(matches), strings.Join(candidates, ", ")).
+		"%d sources offer a resource named %q: %s",
+		len(matches), reference.Name, strings.Join(candidates, ", ")).
 		With("candidates", candidates).
-		Hint("use a fully qualified id")
+		Hint("qualify the reference as <source>:%s, or use its id", reference.Name)
 }
 
 // Query filters the catalog. An empty query matches everything.
@@ -154,7 +199,7 @@ func (c *Catalog) Search(q Query) []*model.Resource {
 }
 
 func matchesText(res *model.Resource, needle string) bool {
-	for _, field := range []string{string(res.ID), res.Name, res.Description} {
+	for _, field := range []string{res.Name, res.Title, res.Description, string(res.ID)} {
 		if strings.Contains(strings.ToLower(field), needle) {
 			return true
 		}

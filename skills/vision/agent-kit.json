@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "vision",
+  "id": "11c6c46a-80e5-45bc-9980-f3f338a8430a",
+  "name": "vision",
   "type": "skill",
   "version": "1.0.0",
   "description": "Articula la visión del producto a 6-12 meses como una \"north star\" memorable y medible. Define cómo se ve el éxito y qué NO somos (anti-visión). Trigger cuando el usuario quiera \"definir la visión\", \"north star\", \"cómo se ve el éxito\", \"visión del producto\" o necesite alinear al equipo en una dirección clara antes de diseñar.",

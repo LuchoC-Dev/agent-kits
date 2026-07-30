@@ -1,27 +1,34 @@
 {
   "schema_version": 1,
-  "id": "tools",
+  "id": "04542bb5-4c44-42ae-9060-746531f904f4",
+  "name": "tools",
   "type": "kit",
   "version": "0.1.0",
   "description": "Pack de herramientas transversales de desarrollo. Git, GitHub CLI, Docker, variables de entorno y automatización de tareas. Funciona con cualquier stack.",
   "dependencies": [
     {
-      "id": "branch-pr"
+      "id": "72d25d87-5321-4028-8202-775167645e41",
+      "name": "branch-pr"
     },
     {
-      "id": "docker-expert"
+      "id": "8172f61e-d176-4366-afb3-817032103847",
+      "name": "docker-expert"
     },
     {
-      "id": "environment-setup"
+      "id": "3a33c2e8-479f-46d4-9749-8611eea88502",
+      "name": "environment-setup"
     },
     {
-      "id": "gh-cli"
+      "id": "e6a4e819-1ca6-474a-91db-9aa40a3f61dd",
+      "name": "gh-cli"
     },
     {
-      "id": "git-commit"
+      "id": "60c3df1f-4b19-4e9d-b805-2a0ca0ca5bb2",
+      "name": "git-commit"
     },
     {
-      "id": "taskfile-setup"
+      "id": "3569f9e4-61a6-459f-b6cc-453ee4a6f270",
+      "name": "taskfile-setup"
     }
   ],
   "files": [

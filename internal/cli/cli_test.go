@@ -68,25 +68,24 @@ func decode(t *testing.T, stdout string) envelope {
 func sampleCatalog() []internaltest.Resource {
 	return []internaltest.Resource{
 		{
-			ID: "problem-framing", Type: model.TypeSkill, Version: "1.0.0",
+			Name: "problem-framing", Type: model.TypeSkill, Version: "1.0.0",
 			Description: "Define the real problem",
 			Files:       map[string]string{"SKILL.md": "# framing\n"},
 		},
 		{
-			ID: "context/context-builder", Type: model.TypeAgent, Version: "1.0.0",
+			Name: "context-builder", Type: model.TypeAgent, Version: "1.0.0",
 			Files: map[string]string{"context-builder.md": "# builder\n"},
 		},
 		{
-			ID: "context", Type: model.TypeKit, Version: "1.0.0",
+			Name: "context", Type: model.TypeKit, Version: "1.0.0",
 			Description: "Context kit",
 			Files:       map[string]string{"pack.md": "# pack\n"},
 			Dependencies: []model.Dependency{
 				internaltest.Dep("problem-framing"),
-				internaltest.Dep("context/context-builder"),
+				internaltest.Dep("context-builder"),
 			},
 		},
-		{ID: "a/dup", Type: model.TypeWorkflow, Version: "1.0.0"},
-		{ID: "b/dup", Type: model.TypeWorkflow, Version: "1.0.0"},
+		{Name: "solo", Type: model.TypeWorkflow, Version: "1.0.0"},
 	}
 }
 
@@ -144,7 +143,7 @@ func TestSearchAndInfo(t *testing.T) {
 
 	found := decode(t, r.mustRun("search", "problem", "--json"))
 	results := found.Data.(map[string]any)["results"].([]any)
-	if len(results) != 1 || results[0].(map[string]any)["id"] != "problem-framing" {
+	if len(results) != 1 || results[0].(map[string]any)["name"] != "problem-framing" {
 		t.Fatalf("results = %v", results)
 	}
 
@@ -251,7 +250,7 @@ func TestUpdatePicksUpNewVersions(t *testing.T) {
 
 	// Publish a new version of the installed skill.
 	internaltest.WriteNativeSource(t, r.sourceDir, internaltest.Resource{
-		ID: "problem-framing", Type: model.TypeSkill, Version: "1.1.0",
+		Name: "problem-framing", Type: model.TypeSkill, Version: "1.1.0",
 		Files: map[string]string{"SKILL.md": "# framing v2\n"},
 	})
 
@@ -288,11 +287,22 @@ func TestDoctorExitsNonZeroWithASingleEnvelope(t *testing.T) {
 	}
 }
 
+// D-036: a name two sources offer is ambiguous, and the CLI refuses to choose.
 func TestAmbiguousReferenceFailsClosed(t *testing.T) {
 	r := newRunner(t, sampleCatalog()...)
-	code, stdout, _ := r.run("plan", "dup", "--project", r.project, "--json")
+
+	// A second source offering the same name as the first.
+	other := t.TempDir()
+	internaltest.WriteNativeSource(t, other, internaltest.Resource{
+		Name: "problem-framing", ID: "3f1c2b7a-9d84-4e11-b6f2-77c1a9e0d512",
+		Type: model.TypeSkill, Version: "2.0.0",
+		Files: map[string]string{"SKILL.md": "# other framing\n"},
+	})
+	r.mustRun("source", "add", "acme", other, "--trust", "trusted")
+
+	code, stdout, _ := r.run("plan", "problem-framing", "--project", r.project, "--json")
 	if code != errs.ExitIntegrity {
-		t.Fatalf("exit = %d, want %d", code, errs.ExitIntegrity)
+		t.Fatalf("exit = %d, want %d\n%s", code, errs.ExitIntegrity, stdout)
 	}
 	result := decode(t, stdout)
 	if result.OK || result.Error.Code != errs.CodeAmbiguousID {
@@ -300,7 +310,16 @@ func TestAmbiguousReferenceFailsClosed(t *testing.T) {
 	}
 	candidates, ok := result.Error.Details["candidates"].([]any)
 	if !ok || len(candidates) != 2 {
-		t.Errorf("details = %+v", result.Error.Details)
+		t.Fatalf("details = %+v", result.Error.Details)
+	}
+	if candidates[0] != "acme:problem-framing" {
+		t.Errorf("candidates must be qualified by source: %v", candidates)
+	}
+
+	// Qualifying the reference resolves it.
+	resolved := decode(t, r.mustRun("plan", "acme:problem-framing", "--project", r.project, "--json"))
+	if !resolved.OK {
+		t.Fatalf("a qualified reference failed: %+v", resolved)
 	}
 }
 

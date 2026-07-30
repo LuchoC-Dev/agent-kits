@@ -38,19 +38,17 @@ type Config struct {
 	Sources       []Source `json:"sources"`
 }
 
-// namePattern keeps source names usable as directory names.
-var namePattern = model.ParseID
-
 // Validate normalises and checks a source declaration.
+//
+// A source name is kebab-case for two reasons: it has to work as a directory name in the
+// cache, and it is the qualifier of a reference — `acme:frontend-design` — so it must not
+// contain the separator (D-036).
 func (s *Source) Validate() error {
 	s.Name = strings.TrimSpace(s.Name)
 	s.URL = strings.TrimSpace(s.URL)
-	if _, err := namePattern(s.Name); err != nil {
+	if _, err := model.ParseName(s.Name); err != nil {
 		return errs.New(errs.CodeUsage,
 			"invalid source name %q: use lower-case kebab-case", s.Name)
-	}
-	if strings.ContainsRune(s.Name, '/') {
-		return errs.New(errs.CodeUsage, "source name %q may not contain a slash", s.Name)
 	}
 	if s.URL == "" {
 		return errs.New(errs.CodeUsage, "source %s declares no url", s.Name)

@@ -1,78 +1,102 @@
 {
   "schema_version": 1,
-  "id": "fullstack-design/fullstack-designer",
+  "id": "635a9e24-a79b-4ab2-9c4e-d6b89a87c222",
+  "name": "fullstack-designer",
   "type": "agent",
   "version": "1.0.0",
   "description": "Orquesta el workflow fullstack-design, componiendo el track de diseño frontend y el de backend en un proceso coordinado, con un único setup y una sola decisión de stack.",
   "dependencies": [
     {
-      "id": "accessibility-plan"
+      "id": "a99e9549-550b-4692-8da0-903c02504b72",
+      "name": "accessibility-plan"
     },
     {
-      "id": "api-contract"
+      "id": "5aacafc6-95ac-4576-b07a-a190f55e5c4a",
+      "name": "api-contract"
     },
     {
-      "id": "artifact-validator"
+      "id": "c348d043-be1e-4d71-b695-de5cd3350f4f",
+      "name": "artifact-validator"
     },
     {
-      "id": "code-conventions"
+      "id": "b8a17758-b0e3-4932-947e-4131ab195522",
+      "name": "code-conventions"
     },
     {
-      "id": "component-inventory"
+      "id": "180f7c02-dad1-464f-872d-d070f8f29545",
+      "name": "component-inventory"
     },
     {
-      "id": "data-model"
+      "id": "02a8480c-7540-4999-83a7-653ce1ea2ef1",
+      "name": "data-model"
     },
     {
-      "id": "design-critic"
+      "id": "b07f734a-0788-410b-9f44-a179439ef0c8",
+      "name": "design-critic"
     },
     {
-      "id": "design-system-tokens"
+      "id": "70a40a2a-9466-4c4c-a3e9-70863028bf03",
+      "name": "design-system-tokens"
     },
     {
-      "id": "discovery"
+      "id": "9ce2abb5-83dd-4308-957a-47d047b9d220",
+      "name": "discovery"
     },
     {
-      "id": "fullstack-design/fullstack-design"
+      "id": "873b5a78-4dc6-4f8c-aa4e-443269740f67",
+      "name": "design-fullstack"
     },
     {
-      "id": "html-mockup"
+      "id": "182adc0b-17e5-4662-a77d-ef268cd7d73e",
+      "name": "html-mockup"
     },
     {
-      "id": "information-architecture"
+      "id": "87d7ec08-09b1-435d-a59f-36b20e359228",
+      "name": "information-architecture"
     },
     {
-      "id": "integrations-auth"
+      "id": "1e885ad6-41e9-4b06-8582-3431419fc8a2",
+      "name": "integrations-auth"
     },
     {
-      "id": "nonfunctional"
+      "id": "76a71272-1569-48b0-aba0-fa4b40637c73",
+      "name": "nonfunctional"
     },
     {
-      "id": "performance-budget"
+      "id": "e6ba50a9-97b9-412b-a143-6b58d4fff10e",
+      "name": "performance-budget"
     },
     {
-      "id": "progressive-design"
+      "id": "1b4d6bb8-f28a-40d7-9c21-8db944e06cd3",
+      "name": "progressive-design"
     },
     {
-      "id": "research-scout"
+      "id": "2baa45a7-214c-4800-88b0-61ec3a7f01ae",
+      "name": "research-scout"
     },
     {
-      "id": "security-design"
+      "id": "3b8ae106-fa7b-4358-aab1-8104e51120e9",
+      "name": "security-design"
     },
     {
-      "id": "service-architecture"
+      "id": "b39d0055-5d37-4e8a-8562-330d3ca9ebc5",
+      "name": "service-architecture"
     },
     {
-      "id": "tech-decisions"
+      "id": "226a56ca-f4a7-4ff5-915e-de0019386933",
+      "name": "tech-decisions"
     },
     {
-      "id": "testing-strategy"
+      "id": "2bf31c3d-1432-4e2c-97ab-b82c0a08f159",
+      "name": "testing-strategy"
     },
     {
-      "id": "user-flows"
+      "id": "8eaaf9b2-9256-41c8-a36a-3ae42b687492",
+      "name": "user-flows"
     },
     {
-      "id": "wireframes"
+      "id": "26c51fea-a3c3-44dd-a2d3-529512f9d832",
+      "name": "wireframes"
     }
   ],
   "files": [

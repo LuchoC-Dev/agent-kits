@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "assumptions-risks",
+  "id": "d565b4e5-98ff-459d-85ae-9683d098a0a8",
+  "name": "assumptions-risks",
   "type": "skill",
   "version": "1.0.0",
   "description": "Identifica las apuestas (assumptions/hypotheses) y los riesgos (unknowns/threats) del producto. Clasifica por criticidad y propone forma de validación temprana. Trigger cuando el usuario quiera \"listar supuestos\", \"riesgos del proyecto\", \"qué estamos asumiendo\", \"hipótesis\", \"unknowns\" o necesite mapear bets y amenazas antes de implementar.",

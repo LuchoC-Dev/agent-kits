@@ -26,17 +26,36 @@ permite tener perfiles aislados.
 
 ## Modelo
 
-Un **recurso** es una `skill`, un `agent`, un `workflow` o un `kit` (D-020). Su identidad
-es un ID canónico en una de dos formas (D-019):
+Un **recurso** es una `skill`, un `agent`, un `workflow` o un `kit` (D-020).
+
+Su **identidad** es un UUID asignado una vez y para siempre (D-035). Su **nombre** es cómo
+lo pedís y dónde se instala, y puede cambiar (D-036). Pertenecer a un kit es una relación,
+no parte de la identidad: mover un recurso de un kit a otro no cambia quién es.
+
+| | Qué es | ¿Cambia? |
+|---|---|---|
+| `id` | la identidad | nunca |
+| `name` | el nombre de instalación | sí, es un rename explícito |
+| kit | una relación de composición | libremente |
+
+Por eso un rename no rompe nada: el lockfile registra la identidad, así que sigue
+apuntando al mismo recurso aunque su nombre cambie.
+
+### Cómo se referencia un recurso
 
 ```text
-frontend-design               recurso del pool global
-backend/feature-development   recurso cuya identidad pertenece a un kit
+frontend-design          el nombre, cuando una sola source lo ofrece
+acme:frontend-design     calificado por source, cuando varias lo ofrecen
+9f2c1b7a-…               el UUID, que siempre funciona
 ```
 
-Una referencia corta se acepta cuando identifica un solo recurso. Si coincide con más de
-uno, el comando falla con `ambiguous_id` y lista los candidatos: nunca elige por
-precedencia.
+El nombre es único **dentro de una source**. Entre sources puede repetirse: dos
+organizaciones pueden publicar cada una su `frontend-design` y son recursos distintos. Si
+una referencia corta coincide con más de uno, el comando falla con `ambiguous_id` y lista
+los candidatos calificados. Nunca elige por precedencia.
+
+Dos recursos con el mismo **nombre de instalación** no pueden coexistir en un proyecto:
+dos archivos no ocupan la misma ruta. Eso es `destination_conflict` (D-028).
 
 ## Layout de una source
 
@@ -55,19 +74,26 @@ packs/<kit>/workflows/<id>/…        workflows que el kit posee
 ```json
 {
   "schema_version": 1,
-  "id": "backend/feature-development",
+  "id": "7b6b5f3c-1e2d-4a90-8c31-5f0be2a7d914",
+  "name": "backend-feature-development",
   "type": "workflow",
   "version": "1.0.0",
   "description": "…",
-  "dependencies": [{ "id": "tdd" }],
+  "dependencies": [
+    { "id": "5c954f33-73e3-4c05-b1b0-9d72baff0182", "name": "tdd" }
+  ],
   "files": ["backend-feature-development.md"]
 }
 ```
 
 `files` es relativo al directorio del manifest y decide **la ruta instalada**, no la
 ubicación en la source: mover un recurso de directorio no cambia dónde aterriza. Si se
-omite, se descubren todos los archivos del directorio. Una dependencia admite la forma
-corta `"tdd"` y la explícita `{"id":"tdd","version":"^1.0.0"}`.
+omite, se descubren todos los archivos del directorio.
+
+Una dependencia apunta a la **identidad**, no al nombre, así que sobrevive a un rename del
+recurso del que depende. El `name` que la acompaña es informativo —una lista de UUIDs es
+ilegible— y se verifica contra el recurso resuelto: si no coincide, se informa que el
+manifest quedó desactualizado. También se admite la forma corta `"<uuid>"`.
 
 ## Comandos
 

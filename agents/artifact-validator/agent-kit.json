@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "artifact-validator",
+  "id": "c348d043-be1e-4d71-b695-de5cd3350f4f",
+  "name": "artifact-validator",
   "type": "agent",
   "version": "1.0.0",
   "description": "Valida que un set de artefactos generados cumpla el contrato del sistema — frontmatter de identidad, numeración NN-, produces/consumes y cross-refs. Read-only. Se invoca desde un orquestador como pre-flight antes de un gate de aprobación.",

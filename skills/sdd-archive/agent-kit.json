@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "sdd-archive",
+  "id": "d48a3f7e-2c8d-48fb-b95c-e25f78b4bfcc",
+  "name": "sdd-archive",
   "type": "skill",
   "version": "2.0.0",
   "description": "Sync delta specs to main specs and archive a completed change. Trigger: When the orchestrator launches you to archive a change after implementation and verification.",

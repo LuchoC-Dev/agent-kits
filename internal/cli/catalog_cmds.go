@@ -314,7 +314,7 @@ func (a *App) cmdSearch(args []string) error {
 		fmt.Fprintf(a.Stdout, "%d result(s)\n\n", len(matches))
 		table := newTable("ID", "TYPE", "VERSION", "SOURCE", "DESCRIPTION")
 		for _, res := range matches {
-			table.add(string(res.ID), string(res.Type), res.Version, res.Source,
+			table.add(res.Name, string(res.Type), res.Version, res.Source,
 				truncate(res.Description, 60))
 		}
 		table.render(a.Stdout)
@@ -370,7 +370,7 @@ func (a *App) cmdInfo(args []string) error {
 
 	dependencies := make([]string, 0, len(res.Dependencies))
 	for _, dep := range res.Dependencies {
-		label := string(dep.ID)
+		label := dep.Label()
 		if dep.Version != "" {
 			label += " " + dep.Version
 		}
@@ -380,7 +380,7 @@ func (a *App) cmdInfo(args []string) error {
 	for _, candidate := range cat.All() {
 		for _, dep := range candidate.Dependencies {
 			if dep.ID == res.ID {
-				dependents = append(dependents, string(candidate.ID))
+				dependents = append(dependents, candidate.Name)
 				break
 			}
 		}
@@ -390,7 +390,9 @@ func (a *App) cmdInfo(args []string) error {
 	data := map[string]any{
 		"id":           res.ID,
 		"type":         res.Type,
-		"name":         res.DisplayName(),
+		"name":         res.Name,
+		"title":        res.Title,
+		"qualified":    res.Qualified(),
 		"version":      res.Version,
 		"description":  res.Description,
 		"source":       res.Source,
@@ -406,7 +408,9 @@ func (a *App) cmdInfo(args []string) error {
 		"consumes":     res.Consumes,
 	}
 	return a.succeed("info", data, func() {
-		fmt.Fprintf(a.Stdout, "%s · %s %s · source %s\n", res.ID, res.Type, res.Version, res.Source)
+		fmt.Fprintf(a.Stdout, "%s · %s %s · source %s\n",
+			res.Name, res.Type, res.Version, res.Source)
+		fmt.Fprintf(a.Stdout, "  id          %s\n", res.ID)
 		if res.Description != "" {
 			fmt.Fprintf(a.Stdout, "\n%s\n", wrap(res.Description, 88))
 		}

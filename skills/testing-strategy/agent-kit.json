@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "testing-strategy",
+  "id": "2bf31c3d-1432-4e2c-97ab-b82c0a08f159",
+  "name": "testing-strategy",
   "type": "skill",
   "version": "1.0.0",
   "description": "Define la estrategia de testing — capas de test (unit, integration, e2e), contract testing entre servicios, estrategia de test data y targets de cobertura. Es estrategia, no metodología test-first (eso vive en el pack implementation). Trigger cuando el usuario quiera \"estrategia de testing\", \"qué probar\", \"tests de integración\", \"contract testing\", \"test data\", \"cobertura\" o necesite cerrar cómo se prueba el backend antes de implementar.",

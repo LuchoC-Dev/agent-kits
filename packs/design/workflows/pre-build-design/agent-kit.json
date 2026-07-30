@@ -1,12 +1,14 @@
 {
   "schema_version": 1,
-  "id": "design/pre-build-design",
+  "id": "150fab8a-878d-405f-9928-c0635a3e4c66",
+  "name": "pre-build-design",
   "type": "workflow",
   "version": "1.0.0",
   "description": "Workflow de diseño pre-build con 3 modos de scope (Basic, Medium, Advanced). Selecciona el subset de fases adecuado al tamaño del problema y produce documentación en docs/design/.",
   "dependencies": [
     {
-      "id": "design/designer"
+      "id": "800432c9-4bae-41d9-b223-8e50f1deb9da",
+      "name": "designer"
     }
   ],
   "files": [

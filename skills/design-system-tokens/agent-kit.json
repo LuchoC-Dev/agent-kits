@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "design-system-tokens",
+  "id": "70a40a2a-9466-4c4c-a3e9-70863028bf03",
+  "name": "design-system-tokens",
   "type": "skill",
   "version": "1.0.0",
   "description": "Define los design tokens del proyecto — colores, tipografía, spacing, radios, sombras, breakpoints, motion. Trigger cuando el usuario quiera \"definir tokens\", \"design system\", \"paleta de colores\", \"tipografía\", \"tokens de diseño\" o necesite establecer las bases visuales del proyecto antes de implementar componentes.",

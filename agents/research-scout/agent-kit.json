@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "research-scout",
+  "id": "2baa45a7-214c-4800-88b0-61ec3a7f01ae",
+  "name": "research-scout",
   "type": "agent",
   "version": "1.0.0",
   "description": "Investiga opciones técnicas (frameworks, librerías, bases de datos, servicios, patrones) y devuelve una comparación destilada con recomendación. Se invoca cuando una decisión de diseño requiere evaluar alternativas. Corre aislado para que el ruido de la investigación no contamine el contexto del orquestador.",

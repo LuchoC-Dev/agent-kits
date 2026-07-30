@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "design-critic",
+  "id": "b07f734a-0788-410b-9f44-a179439ef0c8",
+  "name": "design-critic",
   "type": "agent",
   "version": "1.0.0",
   "description": "Revisor adversarial de artefactos de diseño. Detecta huecos, contradicciones, decisiones sin justificar, supuestos implícitos y scope creep. Opera en modo single (un artefacto) o set (directorio completo con análisis cruzado). No comparte contexto con quien generó el artefacto.",

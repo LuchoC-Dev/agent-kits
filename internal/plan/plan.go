@@ -83,10 +83,10 @@ func (p *Planner) Install(result *resolve.Result) (*model.Plan, error) {
 
 	// claims maps a destination path to the resource that intends to write it, so two
 	// resources targeting the same file are caught before anything is written.
-	claims := map[string]model.ID{}
+	claims := map[string]claim{}
 	for _, existing := range proposed.Resources {
 		for _, file := range existing.Files {
-			claims[file.Path] = existing.ID
+			claims[file.Path] = claim{id: existing.ID, name: existing.Name, source: existing.Source}
 		}
 	}
 
@@ -109,16 +109,28 @@ func (p *Planner) Install(result *resolve.Result) (*model.Plan, error) {
 	return out, nil
 }
 
+// claim records which resource intends to write a destination path. It carries the name as
+// well as the identity because a conflict is reported to a person, and two resources that
+// collide are told apart by name and source, not by UUID.
+type claim struct {
+	id     model.ID
+	name   string
+	source string
+}
+
+func (c claim) label() string { return model.Qualify(c.source, c.name) }
+
 // planResource classifies every file of one resource.
 func (p *Planner) planResource(
-	res *model.Resource, requested bool, claims map[string]model.ID, out *model.Plan,
+	res *model.Resource, requested bool, claims map[string]claim, out *model.Plan,
 ) (model.LockResource, []model.FileChange, error) {
-	if err := p.Limits.CheckFileCount(string(res.ID), len(res.Files)); err != nil {
+	if err := p.Limits.CheckFileCount(res.Name, len(res.Files)); err != nil {
 		return model.LockResource{}, nil, err
 	}
 
 	record := model.LockResource{
 		ID:        res.ID,
+		Name:      res.Name,
 		Type:      res.Type,
 		Source:    res.Source,
 		Version:   res.Version,
@@ -146,7 +158,7 @@ func (p *Planner) planResource(
 		content, err := os.ReadFile(sourcePath)
 		if err != nil {
 			return model.LockResource{}, nil, errs.Wrap(errs.CodeSourceUnavailable, err,
-				"cannot read %s of %s", rel, res.ID)
+				"cannot read %s of %s", rel, res.Name)
 		}
 		if err := p.Limits.CheckSize(rel, int64(len(content))); err != nil {
 			return model.LockResource{}, nil, err
@@ -155,16 +167,16 @@ func (p *Planner) planResource(
 
 		p.scan(res, dest, content, out)
 
-		if owner, taken := claims[dest]; taken && owner != res.ID {
+		if owner, taken := claims[dest]; taken && owner.id != res.ID {
 			out.Blockers = append(out.Blockers, model.Diagnostic{
 				Code: errs.CodeDestinationConflict,
-				Ref:  string(res.ID),
+				Ref:  res.Name,
 				Path: dest,
-				Message: "both " + string(owner) + " and " + string(res.ID) +
-					" install this path with different identities",
+				Message: "both " + owner.label() + " and " + res.Qualified() +
+					" install this path, and they are different resources",
 			})
 		}
-		claims[dest] = res.ID
+		claims[dest] = claim{id: res.ID, name: res.Name, source: res.Source}
 
 		action, err := p.classify(dest, absDest, newSum, res.ID, out)
 		if err != nil {
@@ -258,7 +270,7 @@ func (p *Planner) scan(res *model.Resource, dest string, content []byte, out *mo
 	for _, finding := range security.ScanSecrets(dest, content) {
 		diagnostic := model.Diagnostic{
 			Code:    errs.CodeUnsafeContent,
-			Ref:     string(res.ID),
+			Ref:     res.Name,
 			Path:    dest,
 			Message: finding.Message(),
 		}
@@ -272,7 +284,7 @@ func (p *Planner) scan(res *model.Resource, dest string, content []byte, out *mo
 
 // prune plans the removal of files a resource owned in the lockfile but no longer ships.
 func (p *Planner) prune(
-	result *resolve.Result, claims map[string]model.ID, out *model.Plan,
+	result *resolve.Result, claims map[string]claim, out *model.Plan,
 ) []model.FileChange {
 	var changes []model.FileChange
 	for _, existing := range p.Lock.Resources {
@@ -287,7 +299,7 @@ func (p *Planner) prune(
 			continue
 		}
 		for _, file := range existing.Files {
-			if owner, kept := claims[file.Path]; kept && owner == existing.ID {
+			if owner, kept := claims[file.Path]; kept && owner.id == existing.ID {
 				continue
 			}
 			change, ok := p.planRemoval(file, existing.ID, out)
@@ -341,6 +353,7 @@ func (p *Planner) planRemoval(
 func (p *Planner) describe(res *model.Resource, requested bool) model.PlanResource {
 	entry := model.PlanResource{
 		ID:        res.ID,
+		Name:      res.Name,
 		Type:      res.Type,
 		Version:   res.Version,
 		Source:    res.Source,
@@ -407,7 +420,7 @@ func (p *Planner) Remove(refs []string, cat *catalog.Catalog) (*model.Plan, erro
 		}
 		proposed.Delete(existing.ID)
 		out.Resources = append(out.Resources, model.PlanResource{
-			ID: existing.ID, Type: existing.Type, Version: existing.Version,
+			ID: existing.ID, Name: existing.Name, Type: existing.Type, Version: existing.Version,
 			Source: existing.Source, Requested: existing.Requested, State: "remove",
 			From: existing.Version,
 		})
@@ -421,32 +434,52 @@ func (p *Planner) Remove(refs []string, cat *catalog.Catalog) (*model.Plan, erro
 
 // findInstalled resolves a reference against the lockfile rather than the catalog, so a
 // resource can be removed even after its source disappears.
+//
+// The lockfile is the authority here, which is why a rename in the catalog cannot make an
+// installed resource unremovable: the reference matches the name it was installed under,
+// or its identity, which never changes.
 func (p *Planner) findInstalled(ref string, cat *catalog.Catalog) (model.LockResource, error) {
-	if record, ok := p.Lock.Find(model.ID(ref)); ok {
-		return record, nil
+	reference, err := model.ParseReference(ref)
+	if err != nil {
+		return model.LockResource{}, err
 	}
+	if reference.ID != "" {
+		if record, ok := p.Lock.Find(reference.ID); ok {
+			return record, nil
+		}
+		return model.LockResource{}, notInstalled(ref, p.Project)
+	}
+
 	var matches []model.LockResource
 	for _, record := range p.Lock.Resources {
-		if record.ID.Matches(ref) {
-			matches = append(matches, record)
+		if record.Name != reference.Name {
+			continue
 		}
+		if reference.Qualified() && record.Source != reference.Source {
+			continue
+		}
+		matches = append(matches, record)
 	}
 	switch len(matches) {
 	case 1:
 		return matches[0], nil
 	case 0:
-		return model.LockResource{}, errs.New(errs.CodeNotInstalled,
-			"%q is not installed in this project", ref).
-			Hint("run `agent-kits list --project %s`", p.Project)
+		return model.LockResource{}, notInstalled(ref, p.Project)
 	}
 	candidates := make([]string, 0, len(matches))
 	for _, match := range matches {
-		candidates = append(candidates, string(match.ID))
+		candidates = append(candidates, model.Qualify(match.Source, match.Name))
 	}
 	sort.Strings(candidates)
 	return model.LockResource{}, errs.New(errs.CodeAmbiguousID,
 		"%q matches %d installed resources: %v", ref, len(matches), candidates).
-		With("candidates", candidates)
+		With("candidates", candidates).
+		Hint("qualify the reference as <source>:%s, or use its id", reference.Name)
+}
+
+func notInstalled(ref, project string) error {
+	return errs.New(errs.CodeNotInstalled, "%q is not installed in this project", ref).
+		Hint("run `agent-kits list --project %s`", project)
 }
 
 // reachable returns the resources still required by requested resources that survive.

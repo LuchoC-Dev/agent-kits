@@ -154,7 +154,7 @@ func (a *App) renderMigration(plan *migrate.Plan) {
 	if len(plan.Adopted) > 0 {
 		ids := make([]string, 0, len(plan.Adopted))
 		for _, res := range plan.Adopted {
-			ids = append(ids, string(res.ID))
+			ids = append(ids, res.Name)
 		}
 		fmt.Fprintf(a.Stdout, "  adopting %s\n", strings.Join(ids, ", "))
 	}

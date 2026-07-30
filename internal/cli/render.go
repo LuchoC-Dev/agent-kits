@@ -164,7 +164,7 @@ func requestedList(p *model.Plan) []string {
 	var out []string
 	for _, res := range p.Resources {
 		if res.Requested {
-			label := string(res.ID)
+			label := res.Name
 			if res.State != "new" && res.State != "adopt" {
 				label += " (" + res.State + ")"
 			}

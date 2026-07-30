@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "problem-framing",
+  "id": "0741cdb9-448a-4927-82f9-02259c9e5998",
+  "name": "problem-framing",
   "type": "skill",
   "version": "1.0.0",
   "description": "Define el problema real antes de saltar a soluciones. Aplica \"5 Whys\" y la separación problema/solución para evitar diseñar features sin entender por qué existen. Trigger cuando el usuario quiera \"definir el problema\", \"framing del problema\", \"entender qué resolvemos\", \"5 whys\" o esté arrancando un producto desde una idea.",

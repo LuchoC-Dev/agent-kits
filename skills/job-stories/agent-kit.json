@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "job-stories",
+  "id": "48b67728-169d-4973-becd-b7eb8ed5cffa",
+  "name": "job-stories",
   "type": "skill",
   "version": "1.0.0",
   "description": "Documenta los \"trabajos\" que los usuarios contratan al producto para hacer, usando el formato Job Story (cuando ___, quiero ___, así puedo ___). Más profundo que JTBD simple — captura situación, motivación y resultado esperado. Trigger cuando el usuario quiera \"job stories\", \"JTBD\", \"trabajos del usuario\", \"qué viene a lograr el usuario\" o necesite entender motivaciones reales antes de diseñar.",

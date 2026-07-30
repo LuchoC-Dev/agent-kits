@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "service-architecture",
+  "id": "b39d0055-5d37-4e8a-8562-330d3ca9ebc5",
+  "name": "service-architecture",
   "type": "skill",
   "version": "1.0.0",
   "description": "Define el estilo arquitectónico (capas, hexagonal, clean, DDD táctico, microservicios), los módulos o servicios y sus límites, la comunicación entre ellos y dónde vive la lógica de dominio y el enforcement de reglas de negocio. Trigger cuando el usuario quiera \"arquitectura del backend\", \"monolito o microservicios\", \"hexagonal\", \"clean architecture\", \"DDD\", \"estructura de módulos\" o necesite decidir cómo se organiza el sistema.",

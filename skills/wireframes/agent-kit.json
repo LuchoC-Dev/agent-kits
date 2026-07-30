@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "wireframes",
+  "id": "26c51fea-a3c3-44dd-a2d3-529512f9d832",
+  "name": "wireframes",
   "type": "skill",
   "version": "1.0.0",
   "description": "Genera wireframes low-fi en ASCII o Markdown para cada pantalla clave, mostrando estructura, jerarquía y disposición sin estilos. Trigger cuando el usuario quiera \"wireframes\", \"esqueleto de pantallas\", \"layout low-fi\", \"estructura de la pantalla\" o necesite validar la estructura antes de aplicar estilos.",

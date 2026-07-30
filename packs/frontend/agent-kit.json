@@ -1,30 +1,38 @@
 {
   "schema_version": 1,
-  "id": "frontend",
+  "id": "8b50005a-09a0-4dde-8afa-3bf990b83a0f",
+  "name": "frontend",
   "type": "kit",
   "version": "0.3.1",
   "description": "Pack de desarrollo frontend moderno. Capacidades de UI/UX, ideación y documentación. El diseño pre-build vive en el pack `design` (dependencia).",
   "dependencies": [
     {
-      "id": "brainstorming"
+      "id": "552faf3e-0819-41dc-af42-f32a902c27d2",
+      "name": "brainstorming"
     },
     {
-      "id": "design"
+      "id": "a219341c-1f15-4de4-a234-cd68f47d0968",
+      "name": "design"
     },
     {
-      "id": "find-docs"
+      "id": "ce8bd084-d533-44d0-a320-b303e5e8a68e",
+      "name": "find-docs"
     },
     {
-      "id": "frontend/feature-development"
+      "id": "4fe5d8f2-9f33-4aef-add0-3f4e0c4c3c62",
+      "name": "frontend-feature-development"
     },
     {
-      "id": "frontend/frontend-architect"
+      "id": "74c8b39d-6ef6-49e4-a49d-af0aea66fc9d",
+      "name": "frontend-architect"
     },
     {
-      "id": "tools"
+      "id": "04542bb5-4c44-42ae-9060-746531f904f4",
+      "name": "tools"
     },
     {
-      "id": "ui-ux-pro-max"
+      "id": "e536264a-0f07-40e3-a52d-b00dd667f2e8",
+      "name": "ui-ux-pro-max"
     }
   ],
   "files": [

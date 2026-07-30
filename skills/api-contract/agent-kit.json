@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "api-contract",
+  "id": "5aacafc6-95ac-4576-b07a-a190f55e5c4a",
+  "name": "api-contract",
   "type": "skill",
   "version": "1.0.0",
   "description": "Define el contrato de la API — recursos, endpoints, estilo (REST/GraphQL/RPC), versionado, formato de request/response y de errores, paginación y filtrado. Trigger cuando el usuario quiera \"diseñar la API\", \"definir endpoints\", \"contrato de API\", \"REST o GraphQL\", \"estructura de la API\" o esté por implementar un backend sin el contrato cerrado.",

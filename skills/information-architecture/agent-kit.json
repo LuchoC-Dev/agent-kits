@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "information-architecture",
+  "id": "87d7ec08-09b1-435d-a59f-36b20e359228",
+  "name": "information-architecture",
   "type": "skill",
   "version": "1.0.0",
   "description": "Pregunta al usuario el modelo de navegación y las secciones principales antes de proponer un sitemap. Define rutas, jerarquía de contenido y flujo de entrada. Trigger cuando el usuario quiera \"definir el sitemap\", \"armar la estructura de la app\", \"planificar las rutas\", \"information architecture\" o haya completado el discovery y necesite organizar la app antes de diseñar pantallas.",

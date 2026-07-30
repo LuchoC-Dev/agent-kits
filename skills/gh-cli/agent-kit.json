@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "gh-cli",
+  "id": "e6a4e819-1ca6-474a-91db-9aa40a3f61dd",
+  "name": "gh-cli",
   "type": "skill",
   "version": "1.0.0",
   "description": "GitHub CLI (gh) comprehensive reference for repositories, issues, pull requests, Actions, projects, releases, gists, codespaces, organizations, extensions, and all GitHub operations from the command line.",

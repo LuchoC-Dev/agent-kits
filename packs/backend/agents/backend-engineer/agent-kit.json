@@ -1,30 +1,38 @@
 {
   "schema_version": 1,
-  "id": "backend/backend-engineer",
+  "id": "d1e3de87-e158-4153-b0ac-f82d8aa8f1ee",
+  "name": "backend-engineer",
   "type": "agent",
   "version": "1.0.0",
   "description": "Ingeniero backend senior especializado en APIs REST/GraphQL, infraestructura Docker y gestión de entornos.",
   "dependencies": [
     {
-      "id": "branch-pr"
+      "id": "72d25d87-5321-4028-8202-775167645e41",
+      "name": "branch-pr"
     },
     {
-      "id": "build-progress"
+      "id": "d6a12d9c-6620-4d48-a214-21f290e3a49a",
+      "name": "build-progress"
     },
     {
-      "id": "docker-expert"
+      "id": "8172f61e-d176-4366-afb3-817032103847",
+      "name": "docker-expert"
     },
     {
-      "id": "environment-setup"
+      "id": "3a33c2e8-479f-46d4-9749-8611eea88502",
+      "name": "environment-setup"
     },
     {
-      "id": "find-docs"
+      "id": "ce8bd084-d533-44d0-a320-b303e5e8a68e",
+      "name": "find-docs"
     },
     {
-      "id": "git-commit"
+      "id": "60c3df1f-4b19-4e9d-b805-2a0ca0ca5bb2",
+      "name": "git-commit"
     },
     {
-      "id": "taskfile-setup"
+      "id": "3569f9e4-61a6-459f-b6cc-453ee4a6f270",
+      "name": "taskfile-setup"
     }
   ],
   "files": [

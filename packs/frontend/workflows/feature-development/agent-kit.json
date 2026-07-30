@@ -1,27 +1,34 @@
 {
   "schema_version": 1,
-  "id": "frontend/feature-development",
+  "id": "4fe5d8f2-9f33-4aef-add0-3f4e0c4c3c62",
+  "name": "frontend-feature-development",
   "type": "workflow",
   "version": "1.0.0",
   "description": "Workflow completo para desarrollar una feature frontend desde la idea hasta el PR. Aplica las disciplinas de desarrollo activas del proyecto.",
   "dependencies": [
     {
-      "id": "bdd"
+      "id": "2ef7d094-2a59-49ab-b515-cbdcbeaa7563",
+      "name": "bdd"
     },
     {
-      "id": "brainstorming"
+      "id": "552faf3e-0819-41dc-af42-f32a902c27d2",
+      "name": "brainstorming"
     },
     {
-      "id": "branch-pr"
+      "id": "72d25d87-5321-4028-8202-775167645e41",
+      "name": "branch-pr"
     },
     {
-      "id": "find-docs"
+      "id": "ce8bd084-d533-44d0-a320-b303e5e8a68e",
+      "name": "find-docs"
     },
     {
-      "id": "git-commit"
+      "id": "60c3df1f-4b19-4e9d-b805-2a0ca0ca5bb2",
+      "name": "git-commit"
     },
     {
-      "id": "ui-ux-pro-max"
+      "id": "e536264a-0f07-40e3-a52d-b00dd667f2e8",
+      "name": "ui-ux-pro-max"
     }
   ],
   "files": [

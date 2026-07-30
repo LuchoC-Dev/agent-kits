@@ -51,23 +51,24 @@ func merge(t *testing.T, public, private []internaltest.Resource) *catalog.Catal
 	return cat
 }
 
+// ids lists the resolved resources by name: an order of UUIDs tells a reader nothing.
 func ids(result *Result) []string {
 	out := make([]string, 0, len(result.Order))
 	for _, res := range result.Order {
-		out = append(out, string(res.ID))
+		out = append(out, res.Name)
 	}
 	return out
 }
 
 func TestResolveIncludesTransitiveDependenciesInOrder(t *testing.T) {
 	cat := load(t, model.AccessPublic,
-		internaltest.Resource{ID: "leaf", Type: model.TypeSkill, Version: "1.0.0"},
+		internaltest.Resource{Name: "leaf", Type: model.TypeSkill, Version: "1.0.0"},
 		internaltest.Resource{
-			ID: "middle", Type: model.TypeSkill, Version: "1.0.0",
+			Name: "middle", Type: model.TypeSkill, Version: "1.0.0",
 			Dependencies: []model.Dependency{internaltest.Dep("leaf")},
 		},
 		internaltest.Resource{
-			ID: "root", Type: model.TypeKit, Version: "1.0.0",
+			Name: "root", Type: model.TypeKit, Version: "1.0.0",
 			Dependencies: []model.Dependency{internaltest.Dep("middle")},
 		},
 	)
@@ -85,20 +86,20 @@ func TestResolveIncludesTransitiveDependenciesInOrder(t *testing.T) {
 			t.Fatalf("order = %v, want dependencies first: %v", got, want)
 		}
 	}
-	if !result.Requested["root"] || result.Requested["leaf"] {
+	if !result.Requested[internaltest.IDOf("root")] || result.Requested[internaltest.IDOf("leaf")] {
 		t.Errorf("Requested = %+v", result.Requested)
 	}
 }
 
 func TestResolveDeduplicatesSharedDependencies(t *testing.T) {
 	cat := load(t, model.AccessPublic,
-		internaltest.Resource{ID: "shared", Type: model.TypeSkill, Version: "1.0.0"},
+		internaltest.Resource{Name: "shared", Type: model.TypeSkill, Version: "1.0.0"},
 		internaltest.Resource{
-			ID: "a", Type: model.TypeKit, Version: "1.0.0",
+			Name: "a", Type: model.TypeKit, Version: "1.0.0",
 			Dependencies: []model.Dependency{internaltest.Dep("shared")},
 		},
 		internaltest.Resource{
-			ID: "b", Type: model.TypeKit, Version: "1.0.0",
+			Name: "b", Type: model.TypeKit, Version: "1.0.0",
 			Dependencies: []model.Dependency{internaltest.Dep("shared")},
 		},
 	)
@@ -116,15 +117,15 @@ func TestResolveDeduplicatesSharedDependencies(t *testing.T) {
 func TestResolveReportsMutualReferencesWithoutFailing(t *testing.T) {
 	cat := load(t, model.AccessPublic,
 		internaltest.Resource{
-			ID: "kit/agent", Type: model.TypeAgent, Version: "1.0.0",
-			Dependencies: []model.Dependency{internaltest.Dep("kit/flow")},
+			Name: "agent", Type: model.TypeAgent, Version: "1.0.0",
+			Dependencies: []model.Dependency{internaltest.Dep("flow")},
 		},
 		internaltest.Resource{
-			ID: "kit/flow", Type: model.TypeWorkflow, Version: "1.0.0",
-			Dependencies: []model.Dependency{internaltest.Dep("kit/agent")},
+			Name: "flow", Type: model.TypeWorkflow, Version: "1.0.0",
+			Dependencies: []model.Dependency{internaltest.Dep("agent")},
 		},
 	)
-	result, err := New(cat, "agents").Resolve([]string{"kit/agent"})
+	result, err := New(cat, "agents").Resolve([]string{"agent"})
 	if err != nil {
 		t.Fatalf("Resolve returned %v", err)
 	}
@@ -138,7 +139,7 @@ func TestResolveReportsMutualReferencesWithoutFailing(t *testing.T) {
 
 func TestResolveFailsOnMissingDependency(t *testing.T) {
 	cat := load(t, model.AccessPublic, internaltest.Resource{
-		ID: "root", Type: model.TypeKit, Version: "1.0.0",
+		Name: "root", Type: model.TypeKit, Version: "1.0.0",
 		Dependencies: []model.Dependency{internaltest.Dep("gone")},
 	})
 	_, err := New(cat, "agents").Resolve([]string{"root"})
@@ -149,9 +150,9 @@ func TestResolveFailsOnMissingDependency(t *testing.T) {
 
 func TestResolveFailsOnVersionConflict(t *testing.T) {
 	cat := load(t, model.AccessPublic,
-		internaltest.Resource{ID: "dep", Type: model.TypeSkill, Version: "1.0.0"},
+		internaltest.Resource{Name: "dep", Type: model.TypeSkill, Version: "1.0.0"},
 		internaltest.Resource{
-			ID: "root", Type: model.TypeKit, Version: "1.0.0",
+			Name: "root", Type: model.TypeKit, Version: "1.0.0",
 			Dependencies: []model.Dependency{internaltest.Dep("dep", "^2.0.0")},
 		},
 	)
@@ -163,9 +164,9 @@ func TestResolveFailsOnVersionConflict(t *testing.T) {
 
 func TestResolveAcceptsSatisfiedConstraint(t *testing.T) {
 	cat := load(t, model.AccessPublic,
-		internaltest.Resource{ID: "dep", Type: model.TypeSkill, Version: "1.4.2"},
+		internaltest.Resource{Name: "dep", Type: model.TypeSkill, Version: "1.4.2"},
 		internaltest.Resource{
-			ID: "root", Type: model.TypeKit, Version: "1.0.0",
+			Name: "root", Type: model.TypeKit, Version: "1.0.0",
 			Dependencies: []model.Dependency{internaltest.Dep("dep", "^1.2.0")},
 		},
 	)
@@ -178,9 +179,9 @@ func TestResolveAcceptsSatisfiedConstraint(t *testing.T) {
 // anyone without credentials.
 func TestResolveVisibilityRules(t *testing.T) {
 	privateOK := merge(t,
-		[]internaltest.Resource{{ID: "open", Type: model.TypeSkill, Version: "1.0.0"}},
+		[]internaltest.Resource{{Name: "open", Type: model.TypeSkill, Version: "1.0.0"}},
 		[]internaltest.Resource{{
-			ID: "closed", Type: model.TypeKit, Version: "1.0.0",
+			Name: "closed", Type: model.TypeKit, Version: "1.0.0",
 			Dependencies: []model.Dependency{internaltest.Dep("open")},
 		}},
 	)
@@ -190,10 +191,10 @@ func TestResolveVisibilityRules(t *testing.T) {
 
 	publicBad := merge(t,
 		[]internaltest.Resource{{
-			ID: "open", Type: model.TypeKit, Version: "1.0.0",
+			Name: "open", Type: model.TypeKit, Version: "1.0.0",
 			Dependencies: []model.Dependency{internaltest.Dep("closed")},
 		}},
-		[]internaltest.Resource{{ID: "closed", Type: model.TypeSkill, Version: "1.0.0"}},
+		[]internaltest.Resource{{Name: "closed", Type: model.TypeSkill, Version: "1.0.0"}},
 	)
 	_, err := New(publicBad, "agents").Resolve([]string{"open"})
 	if errs.CodeOf(err) != errs.CodeVisibilityViolation {
@@ -203,7 +204,7 @@ func TestResolveVisibilityRules(t *testing.T) {
 
 func TestResolveRejectsIncompatibleRuntime(t *testing.T) {
 	cat := load(t, model.AccessPublic, internaltest.Resource{
-		ID: "only-claude", Type: model.TypeSkill, Version: "1.0.0",
+		Name: "only-claude", Type: model.TypeSkill, Version: "1.0.0",
 		Runtimes: []string{"claude-code"},
 	})
 	if _, err := New(cat, "opencode").Resolve([]string{"only-claude"}); errs.CodeOf(err) != errs.CodeRuntimeUnsupported {
@@ -215,12 +216,20 @@ func TestResolveRejectsIncompatibleRuntime(t *testing.T) {
 }
 
 func TestResolvePropagatesLookupFailures(t *testing.T) {
-	cat := load(t, model.AccessPublic,
-		internaltest.Resource{ID: "a/dup", Type: model.TypeWorkflow, Version: "1.0.0"},
-		internaltest.Resource{ID: "b/dup", Type: model.TypeWorkflow, Version: "1.0.0"},
+	// Ambiguity now lives between sources: within one, a name identifies one resource.
+	cat := merge(t,
+		[]internaltest.Resource{{Name: "dup", Type: model.TypeWorkflow, Version: "1.0.0"}},
+		[]internaltest.Resource{{
+			Name: "dup", ID: "3f1c2b7a-9d84-4e11-b6f2-77c1a9e0d512",
+			Type: model.TypeWorkflow, Version: "1.0.0",
+		}},
 	)
 	if _, err := New(cat, "agents").Resolve([]string{"dup"}); errs.CodeOf(err) != errs.CodeAmbiguousID {
 		t.Fatalf("err = %v, want ambiguous_id", err)
+	}
+	// Qualifying it by source resolves it.
+	if _, err := New(cat, "agents").Resolve([]string{"public:dup"}); err != nil {
+		t.Fatalf("a qualified reference returned %v", err)
 	}
 	if _, err := New(cat, "agents").Resolve([]string{"nope"}); errs.CodeOf(err) != errs.CodeNotFound {
 		t.Fatalf("err = %v, want not_found", err)

@@ -1,39 +1,50 @@
 {
   "schema_version": 1,
-  "id": "sdd",
+  "id": "6269e130-b022-485e-a747-11968b9b6bae",
+  "name": "sdd",
   "type": "skill",
   "version": "1.0.0",
   "description": "Disciplina Spec-Driven Development — la spec (intent, scope, requirements, design, tasks) es la fuente de verdad y antecede a la implementación. Compuesta por el orquestador `sdd-flow` y sus sub-skills (sdd-init, sdd-explore, sdd-propose, sdd-spec, sdd-design, sdd-tasks, sdd-apply, sdd-verify, sdd-archive). Trigger cuando el proyecto tiene `sdd` en las disciplinas activas, o el usuario pide \"SDD\", \"spec-driven\", \"spec primero\", \"OpenSpec\", \"iniciar sdd\", \"sdd init\", o quiere proponer/diseñar/implementar un cambio bajo el flujo de specs.",
   "dependencies": [
     {
-      "id": "sdd-apply"
+      "id": "e3405124-2f37-4561-ae42-f0c5e32a79ca",
+      "name": "sdd-apply"
     },
     {
-      "id": "sdd-archive"
+      "id": "d48a3f7e-2c8d-48fb-b95c-e25f78b4bfcc",
+      "name": "sdd-archive"
     },
     {
-      "id": "sdd-design"
+      "id": "aef236c7-b770-43bf-9ceb-672e58ab910f",
+      "name": "sdd-design"
     },
     {
-      "id": "sdd-explore"
+      "id": "df080685-cec0-4c55-9bd9-a7e70c637fc9",
+      "name": "sdd-explore"
     },
     {
-      "id": "sdd-flow"
+      "id": "3c4ce9d7-26fe-4529-81d0-49a8124da66c",
+      "name": "sdd-flow"
     },
     {
-      "id": "sdd-init"
+      "id": "cff3ca30-1dd3-474d-924a-c321bb01dcb4",
+      "name": "sdd-init"
     },
     {
-      "id": "sdd-propose"
+      "id": "35d1b584-8517-445d-b579-85d03ddaa675",
+      "name": "sdd-propose"
     },
     {
-      "id": "sdd-spec"
+      "id": "283418b2-02a9-4d6c-9144-e6e8f22f1956",
+      "name": "sdd-spec"
     },
     {
-      "id": "sdd-tasks"
+      "id": "4aa3adc0-a76d-4f4b-9931-accd4bc7bcc2",
+      "name": "sdd-tasks"
     },
     {
-      "id": "sdd-verify"
+      "id": "8cbc9f50-3fef-4fda-834c-0f48fe8db0c4",
+      "name": "sdd-verify"
     }
   ],
   "files": [

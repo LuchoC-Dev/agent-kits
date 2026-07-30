@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "contract-first",
+  "id": "bc6ab1c2-7e48-4282-aacf-67f7fc2ba0f8",
+  "name": "contract-first",
   "type": "skill",
   "version": "1.0.0",
   "description": "Disciplina contract-first / API-first — congelar el contrato de la interfaz (OpenAPI, schema, tipos compartidos) como fuente de verdad antes de implementar cualquier lado. Trigger cuando el proyecto tiene `contract-first` en las disciplinas activas, o el usuario pide \"API-first\", \"contrato primero\", \"definir el contrato antes\", \"OpenAPI antes de codear\", o hay cliente y servidor que deben acordar una interfaz.",

@@ -1,18 +1,21 @@
 {
   "schema_version": 1,
-  "id": "fullstack-design/fullstack-design",
+  "id": "873b5a78-4dc6-4f8c-aa4e-443269740f67",
+  "name": "design-fullstack",
   "type": "workflow",
   "version": "1.0.0",
   "description": "Workflow orquestador de diseño fullstack pre-build. Compone el track frontend (skills de design) y el track backend (skills de backend-design) en un proceso coordinado con 3 tiers (Lite/Standard/Full) y 2 estrategias de flujo (Separado / Integrado).",
   "dependencies": [
     {
-      "id": "fullstack-design/fullstack-designer"
+      "id": "635a9e24-a79b-4ab2-9c4e-d6b89a87c222",
+      "name": "fullstack-designer"
     },
     {
-      "id": "tech-decisions"
+      "id": "226a56ca-f4a7-4ff5-915e-de0019386933",
+      "name": "tech-decisions"
     }
   ],
   "files": [
-    "fullstack-design.md"
+    "design-fullstack.md"
   ]
 }

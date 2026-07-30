@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "fullstack-design/cross-track-auditor",
+  "id": "35e944d7-5c4d-44bb-ac44-b35d57e6906a",
+  "name": "cross-track-auditor",
   "type": "agent",
   "version": "1.0.0",
   "description": "Verifica la coherencia entre el track frontend (docs/design/) y el track backend (docs/backend-design/) de un workflow fullstack-design. Detecta contradicciones, huecos de cobertura y drifts entre los dos mundos antes del gate final. Read-only.",

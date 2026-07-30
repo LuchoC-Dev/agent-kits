@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "sdd-tasks",
+  "id": "4aa3adc0-a76d-4f4b-9931-accd4bc7bcc2",
+  "name": "sdd-tasks",
   "type": "skill",
   "version": "2.0.0",
   "description": "Break down a change into an implementation task checklist. Trigger: When the orchestrator launches you to create or update the task breakdown for a change.",

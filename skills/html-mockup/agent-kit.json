@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "id": "html-mockup",
+  "id": "182adc0b-17e5-4662-a77d-ef268cd7d73e",
+  "name": "html-mockup",
   "type": "skill",
   "version": "1.0.0",
   "description": "Genera mockups HTML+Tailwind por pantalla con fidelidad ajustable (mid-fi-plain, mid-fi-tokens, hi-fi). Alternativa visual a wireframes ASCII cuando el usuario necesita \"sentir\" el producto antes de implementar. Trigger cuando el usuario pida \"mockup HTML\", \"prototipo visual\", \"wireframe en HTML\" o \"ver cómo se siente\".",
