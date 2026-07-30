@@ -152,9 +152,19 @@ D-029 deprecó.
 **No cambia** la prohibición que importa: la CLI sigue sin poder escribir en un remoto
 (D-004). Lo que se publica acá es el código de la herramienta, con Git, por una persona.
 
-**Deuda que esta decisión no salda:** los 75 recursos del catálogo estuvieron públicos en
-este repositorio y siguen en su historial. El invariante "nada nace público" (D-038) rige
-hacia adelante; el contenido ya expuesto requiere una decisión aparte.
+**Exposición previa, aceptada el 2026-07-30:** los 75 recursos estuvieron públicos en este
+repositorio y siguen en su historial. Sacarlos de la rama por defecto no los saca del
+historial, y no se hará nada al respecto.
+
+**Razón:** el valor de lo expuesto es bajo y transitorio. La mayor parte del catálogo no
+va a sobrevivir a la poda que D-034 dejó pendiente, así que reescribir el historial
+—con el costo y el riesgo que eso tiene— protegería contenido que de todos modos va a
+desaparecer. El invariante "nada nace público" (D-038) rige hacia adelante, que es donde
+está el contenido que sí importa proteger.
+
+Esto **no** es un permiso general: un recurso que hoy sea sensible sigue naciendo privado
+y sale sólo por publicación explícita. Lo que se acepta es una exposición concreta y
+acotada, no una excepción a la regla.
 
 ## D-015 — Especificar antes de implementar
 
