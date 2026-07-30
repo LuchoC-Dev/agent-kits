@@ -475,13 +475,13 @@ porque dos archivos no pueden ocupar la misma ruta. Eso sigue siendo `destinatio
 **Fecha:** 2026-07-30
 **Cierra:** la pregunta abierta 10 (`origin`)
 
-Tres repositorios:
+Tres repositorios, creados el 2026-07-30:
 
 | Repositorio | Contenido | Visibilidad |
 |---|---|---|
-| este | la CLI (`cmd/`, `internal/`, `docs/`) | público |
-| `<owner>/repository-private` | el catálogo completo | privado |
-| `<owner>/repository` | el subconjunto publicado del catálogo | público |
+| [`LuchoC-Dev/agent-kits`](https://github.com/LuchoC-Dev/agent-kits) | la CLI (`cmd/`, `internal/`, `docs/`) | público |
+| [`LuchoC-Dev/repository-private`](https://github.com/LuchoC-Dev/repository-private) | el catálogo completo | privado |
+| [`LuchoC-Dev/repository`](https://github.com/LuchoC-Dev/repository) | el subconjunto publicado del catálogo | público |
 
 **Razón:** publicar es una operación sobre **contenido**, no sobre código. Mientras el
 catálogo viva junto a la CLI, cada commit de la herramienta es también un commit del

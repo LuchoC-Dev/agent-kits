@@ -9,6 +9,7 @@ import (
 	"github.com/LuchoC-Dev/agent-kits/internal/errs"
 	"github.com/LuchoC-Dev/agent-kits/internal/internaltest"
 	"github.com/LuchoC-Dev/agent-kits/internal/model"
+	"github.com/LuchoC-Dev/agent-kits/internal/source"
 )
 
 func TestLoadNativeLayout(t *testing.T) {
@@ -249,3 +250,84 @@ func TestLoadCheckoutReportsUnrecognisedLayout(t *testing.T) {
 		t.Error("an unrecognised layout should be reported")
 	}
 }
+
+// D-038: a published resource exists in the private source and in its public mirror, and
+// sharing an identity there is the normal state — not a duplicate.
+func TestAPublishedResourceIsNotADuplicate(t *testing.T) {
+	privateDir, publicDir := t.TempDir(), t.TempDir()
+	// The same resource: one identity, seen in both. The private copy is one version ahead,
+	// which is what "published, then edited again" looks like.
+	internaltest.WriteNativeSource(t, privateDir,
+		internaltest.Resource{Name: "tdd", Type: model.TypeSkill, Version: "1.1.0"},
+		internaltest.Resource{Name: "unpublished", Type: model.TypeSkill, Version: "1.0.0"},
+	)
+	internaltest.WriteNativeSource(t, publicDir,
+		internaltest.Resource{Name: "tdd", Type: model.TypeSkill, Version: "1.0.0"},
+	)
+
+	t.Setenv(source.HomeEnv, t.TempDir())
+	store, err := source.Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, src := range []source.Source{
+		{Name: "private", URL: privateDir, Access: model.AccessPrivate, Trust: model.TrustTrusted},
+		{
+			Name: "public", URL: publicDir, Access: model.AccessPublic,
+			Trust: model.TrustTrusted, Publishes: "private",
+		},
+	} {
+		if err := store.Add(src); err != nil {
+			t.Fatalf("Add(%s) returned %v", src.Name, err)
+		}
+	}
+
+	cat, err := catalogOf(store)
+	if err != nil {
+		t.Fatalf("a published resource must not invalidate the catalog: %v", err)
+	}
+	if cat.Len() != 2 {
+		t.Fatalf("catalog holds %d resources, want 2", cat.Len())
+	}
+
+	// The origin wins, because it is at least as new as what was published.
+	res, err := cat.Lookup("tdd")
+	if err != nil {
+		t.Fatalf("Lookup(tdd) returned %v", err)
+	}
+	if res.Source != "private" || res.Version != "1.1.0" {
+		t.Errorf("resolved %s %s, want the private origin at 1.1.0", res.Source, res.Version)
+	}
+	// And it appears once: a bare name is not ambiguous just because it was published.
+	if got := cat.Search(Query{Text: "tdd"}); len(got) != 1 {
+		t.Errorf("search matched %d resources, want 1", len(got))
+	}
+}
+
+// Without a declared relationship, the same identity in two sources is still an error: the
+// exception is a declaration, never an inference (D-038).
+func TestUnrelatedSourcesStillConflictOnIdentity(t *testing.T) {
+	first, second := t.TempDir(), t.TempDir()
+	shared := internaltest.Resource{Name: "tdd", Type: model.TypeSkill, Version: "1.0.0"}
+	internaltest.WriteNativeSource(t, first, shared)
+	internaltest.WriteNativeSource(t, second, shared)
+
+	t.Setenv(source.HomeEnv, t.TempDir())
+	store, err := source.Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, src := range []source.Source{
+		{Name: "one", URL: first, Access: model.AccessPublic, Trust: model.TrustTrusted},
+		{Name: "two", URL: second, Access: model.AccessPublic, Trust: model.TrustTrusted},
+	} {
+		if err := store.Add(src); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := catalogOf(store); errs.CodeOf(err) != errs.CodeRegistryIntegrity {
+		t.Fatalf("err = %v, want registry_integrity_error", err)
+	}
+}
+
+func catalogOf(store *source.Store) (*Catalog, error) { return NewLoader().Load(store) }

@@ -145,6 +145,7 @@ func (a *App) sourceAdd(args []string) error {
 	access := set.String("access", string(model.AccessPublic), "public|private")
 	trust := set.String("trust", string(model.TrustReview), "trusted|review")
 	ref := set.String("ref", "", "branch or tag to track")
+	publishes := set.String("publishes", "", "name of the source this one publishes")
 	set.BoolVar(&opts.json, "json", false, "emit JSON")
 	operands, err := a.parse(set, args, opts)
 	if err != nil {
@@ -158,11 +159,12 @@ func (a *App) sourceAdd(args []string) error {
 		return err
 	}
 	src := source.Source{
-		Name:   operands[0],
-		URL:    operands[1],
-		Ref:    *ref,
-		Access: model.Access(*access),
-		Trust:  model.Trust(*trust),
+		Name:      operands[0],
+		URL:       operands[1],
+		Ref:       *ref,
+		Access:    model.Access(*access),
+		Trust:     model.Trust(*trust),
+		Publishes: *publishes,
 	}
 	if err := store.Add(src); err != nil {
 		return err

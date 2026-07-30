@@ -30,6 +30,13 @@ type Source struct {
 	Ref    string       `json:"ref,omitempty"`
 	Access model.Access `json:"access"`
 	Trust  model.Trust  `json:"trust"`
+	// Publishes names the source this one is the published mirror of (D-038).
+	//
+	// A resource that has been published exists in both, sharing one identity, and that is
+	// the normal state rather than a duplicate. Declaring the relationship is what lets the
+	// catalog tell "the same resource, published" apart from "two resources claiming one
+	// identity", without ever breaking a tie by source order.
+	Publishes string `json:"publishes,omitempty"`
 }
 
 // Config is the persisted source list.
@@ -69,7 +76,24 @@ func (s *Source) Validate() error {
 		return errs.New(errs.CodeUsage,
 			"source %s declares unknown trust %q (trusted|review)", s.Name, s.Trust)
 	}
+	s.Publishes = strings.TrimSpace(s.Publishes)
+	if s.Publishes != "" {
+		if _, err := model.ParseName(s.Publishes); err != nil {
+			return errs.New(errs.CodeUsage,
+				"source %s declares an invalid origin %q", s.Name, s.Publishes)
+		}
+		if s.Publishes == s.Name {
+			return errs.New(errs.CodeUsage, "source %s cannot publish itself", s.Name)
+		}
+	}
 	return nil
+}
+
+// Mirrors reports whether a and b are the two ends of one publication relationship, in
+// which case sharing an identity is expected rather than a conflict (D-038).
+func Mirrors(a, b Source) bool {
+	return (a.Publishes != "" && a.Publishes == b.Name) ||
+		(b.Publishes != "" && b.Publishes == a.Name)
 }
 
 // IsLocal reports whether the source is a directory on this machine rather than a remote

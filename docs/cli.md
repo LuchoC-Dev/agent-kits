@@ -111,6 +111,23 @@ agent-kits info <id> [--json]
 `source add` acepta una ruta local, una URL `file://` o un remoto Git. Solo los remotos
 usan cache y requieren `sync`.
 
+### Sources emparentadas por publicación
+
+`--publishes <source>` declara que una source es **el espejo publicado** de otra: el
+público de Agent Kits es el subconjunto publicado del privado (D-038).
+
+```powershell
+agent-kits source add private https://github.com/LuchoC-Dev/repository-private.git --access private
+agent-kits source add public  https://github.com/LuchoC-Dev/repository.git --publishes private
+```
+
+Un recurso publicado existe en las dos y comparte identidad. Entre sources emparentadas eso
+es lo esperado, no un duplicado: gana el **origen privado**, que por construcción está igual
+o más adelantado, y el recurso aparece una sola vez al buscar o resolver. Entre sources **no**
+emparentadas, una identidad repetida sigue siendo `registry_integrity_error`.
+
+La precedencia no se infiere nunca: existe solo porque alguien la declaró.
+
 ### Proyecto
 
 ```text

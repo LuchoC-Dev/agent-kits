@@ -15,10 +15,17 @@ import (
 	"github.com/LuchoC-Dev/agent-kits/internal/source"
 )
 
+// Mirror reports whether two source names are the two ends of one publication
+// relationship, and which of them is the origin (D-038).
+type Mirror func(a, b string) (origin string, paired bool)
+
 // Catalog is an aggregated, uniqueness-checked view of resources.
 type Catalog struct {
-	byID        map[model.ID]*model.Resource
-	byName      map[sourceName]*model.Resource
+	byID   map[model.ID]*model.Resource
+	byName map[sourceName]*model.Resource
+	// mirror answers whether a repeated identity is a publication rather than a conflict.
+	// Nil means no source publishes another, so every repeat is a conflict.
+	mirror      Mirror
 	diagnostics []model.Diagnostic
 }
 
@@ -49,6 +56,16 @@ func (c *Catalog) warn(code errs.Code, ref, message string) {
 // each offer a `frontend-design`, and a caller disambiguates with `<source>:<name>`.
 func (c *Catalog) add(res *model.Resource) error {
 	if existing, clash := c.byID[res.ID]; clash {
+		if origin, paired := c.mirrored(existing.Source, res.Source); paired {
+			// The same resource, seen in a source and in its published mirror. The origin
+			// wins because it is by construction at least as new as what was published.
+			// This is a declared relationship, not a tie broken by order (D-038).
+			if res.Source == origin {
+				c.evict(existing)
+				c.store(res)
+			}
+			return nil
+		}
 		return errs.New(errs.CodeRegistryIntegrity,
 			"identity %s is claimed by two resources: %s and %s",
 			res.ID, existing.Qualified(), res.Qualified()).
@@ -67,13 +84,32 @@ func (c *Catalog) add(res *model.Resource) error {
 			With("ids", []string{string(existing.ID), string(res.ID)}).
 			Hint("a name is unique within a source (D-036); rename one of them")
 	}
-	c.byID[res.ID] = res
-	c.byName[key] = res
+	c.store(res)
 	return nil
 }
 
 // sourceName keys a resource by the pair that must be unique: its source and its name.
 type sourceName struct{ source, name string }
+
+func (c *Catalog) store(res *model.Resource) {
+	c.byID[res.ID] = res
+	c.byName[sourceName{source: res.Source, name: res.Name}] = res
+}
+
+// evict drops a resource that a mirror relationship supersedes, so a published copy never
+// shows up twice — not in a lookup by name, not in a search, not in a listing.
+func (c *Catalog) evict(res *model.Resource) {
+	delete(c.byID, res.ID)
+	delete(c.byName, sourceName{source: res.Source, name: res.Name})
+}
+
+// mirrored consults the declared publication relationships.
+func (c *Catalog) mirrored(a, b string) (string, bool) {
+	if c.mirror == nil || a == b {
+		return "", false
+	}
+	return c.mirror(a, b)
+}
 
 // All returns every resource, ordered by type then id.
 func (c *Catalog) All() []*model.Resource {
@@ -207,6 +243,26 @@ func matchesText(res *model.Resource, needle string) bool {
 	return false
 }
 
+// mirrorOf turns the configured sources into the publication relationships between them.
+// The origin is the source that is published *from*, which is the one the other names.
+func mirrorOf(sources []source.Source) Mirror {
+	byName := make(map[string]source.Source, len(sources))
+	for _, src := range sources {
+		byName[src.Name] = src
+	}
+	return func(a, b string) (string, bool) {
+		first, okA := byName[a]
+		second, okB := byName[b]
+		if !okA || !okB || !source.Mirrors(first, second) {
+			return "", false
+		}
+		if first.Publishes == second.Name {
+			return second.Name, true
+		}
+		return first.Name, true
+	}
+}
+
 // Loader reads catalogs from resolved source checkouts.
 type Loader struct {
 	Limits security.Limits
@@ -237,6 +293,7 @@ func (l *Loader) LoadCheckout(checkout source.Checkout) (*Catalog, error) {
 func (l *Loader) Load(store *source.Store) (*Catalog, error) {
 	checkouts, failures := store.ResolveAll()
 	aggregate := New()
+	aggregate.mirror = mirrorOf(store.List())
 	for _, failure := range failures {
 		aggregate.warn(errs.CodeOf(failure), "", failure.Error())
 	}
