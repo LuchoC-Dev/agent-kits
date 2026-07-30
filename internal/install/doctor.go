@@ -142,20 +142,13 @@ func Doctor(in DoctorInput) (*DoctorReport, error) {
 		}
 	}
 
-	// Managed directories may contain files no lockfile claims — typically a workspace
-	// created by the retired conversational flow, which `migrate` can adopt.
+	// Managed directories may contain files no lockfile claims — content the project owns
+	// but Agent Kits did not install.
 	for _, orphan := range findOrphans(in.Project, owned) {
 		note(errs.CodeWorkspaceInvalid, "", orphan,
-			"file is not recorded in the lockfile; `agent-kits migrate` can adopt it")
+			"file is not recorded in the lockfile")
 	}
 
-	// A project that still carries workspace.json has two files claiming to describe it.
-	// That is reported with the existing vocabulary: the migration is the remedy, and no
-	// new public error code is introduced for it (§7).
-	if workspace.Pending(in.Project) {
-		problem(errs.CodeWorkspaceInvalid, "", workspace.LegacyPath,
-			"this project has not been migrated yet; run `agent-kits migrate --project <path>`")
-	}
 
 	sortDiagnostics(report.Problems)
 	sortDiagnostics(report.Notes)

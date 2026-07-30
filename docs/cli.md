@@ -19,7 +19,7 @@ El binario es estático y no requiere runtime instalado. La única dependencia e
 | `~/.agent-kits/sources.json` | sources configuradas |
 | `~/.agent-kits/cache/<source>/` | espejo local de las sources remotas |
 | `<proyecto>/.agents/agent-kits.lock.json` | **único** estado del proyecto (lockfile v2) |
-| `<proyecto>/.agents/workspace.json.migrated.bak` | copia intacta que deja `migrate`, propiedad del usuario |
+| `<proyecto>/.agents/workspace.json.migrated.bak` | copia que dejó una migración pasada; es del usuario y nadie la toca |
 
 `AGENT_KITS_HOME` reubica el directorio base completo. Es lo que usan los tests y lo que
 permite tener perfiles aislados.
@@ -137,13 +137,8 @@ agent-kits update [<id>...] --project <path> [--yes] [--force] [--json]
 agent-kits remove <id>...  --project <path> [--yes] [--json]
 agent-kits list            --project <path> [--json]
 agent-kits doctor          --project <path> [--json]
-agent-kits migrate         --project <path> [--yes] [--json]
 agent-kits version [--json]
 ```
-
-`agent-kits import` sigue existiendo como **alias deprecado** de `migrate`: comparte su
-implementación, avisa por `stderr` y añade un campo `deprecated` al JSON. Se elimina en un
-cambio posterior aprobado (D-031).
 
 Los flags pueden ir antes o después de los operandos: `install frontend-design --project .`
 y `install --project . frontend-design` son equivalentes.
@@ -244,53 +239,34 @@ registro de la migración si la hubo.
 ```
 
 `project.id` y `project.created_at` se asignan en la primera escritura y **no cambian
-nunca** después: instalar, actualizar, eliminar o migrar los preservan.
+nunca** después: instalar, actualizar y eliminar los preservan.
 
 Un lockfile v1 sigue siendo legible: se actualiza en memoria al leerlo, así que toda
 escritura produce v2. Un `schema_version` desconocido falla con `workspace_invalid`.
 
-## Migración desde `kits-init`
+## Proyectos anteriores a la CLI
 
-`workspace.json` ya no se escribe. Un proyecto creado por el flujo conversacional heredado
-se adopta una sola vez:
+`workspace.json` era el estado que escribía la skill conversacional `kits-init`. La CLI ya
+no lo lee ni lo escribe, y el comando `migrate` que servía para adoptarlo se retiró al
+cerrarse su ventana (D-041).
+
+Si un proyecto todavía tiene uno, hoy es un archivo ajeno: ningún comando lo mira, ninguno
+se bloquea por él y `doctor` no lo menciona. El proyecto se comporta como cualquier otro
+sin lockfile — la primera instalación crea uno, y el contenido que ya estaba se adopta o
+diverge según la política de conflictos.
+
+Para migrar uno de verdad hay que construir la CLI desde el tag `migration-window`, que
+marca la última versión capaz de hacerlo:
 
 ```powershell
-agent-kits migrate --project . --json   # calcula el plan, no escribe
-agent-kits migrate --project . --yes    # lo aplica
+git checkout migration-window
+go build -o agent-kits.exe ./cmd/agent-kits
+./agent-kits.exe migrate --project <path> --yes
 ```
 
-La migración:
-
-- genera y valida el lockfile v2 **antes** de retirar `workspace.json`;
-- conserva identidad, stack, disciplinas y fechas de instalación heredadas;
-- guarda en `migration` los datos históricos (`pack`, `flags`, `structure`,
-  `system_version`) y **todo** campo desconocido, tal cual estaba;
-- escribe `.agents/workspace.json.migrated.bak` con los bytes originales, no con una
-  reserialización;
-- aplica lockfile, backup y retirada como una sola operación journalizada: si algo falla,
-  el proyecto queda exactamente como estaba.
-
-Es idempotente: repetirla no cambia ningún archivo. Si se interrumpió después del backup,
-la siguiente ejecución solo completa la retirada.
-
-La adopción de recursos es conservadora y **fail-closed**:
-
-| Situación | Resultado |
-|---|---|
-| todos los archivos coinciden con el catálogo | se adopta |
-| un archivo administrado difiere | **bloquea** con `local_divergence` |
-| un recurso declarado en `workspace.json` no se identifica | **bloquea** |
-| un archivo suelto en `.agents/` no se identifica | se informa y se deja como está |
-| ya existe un backup con contenido distinto | **bloquea** con `integrity_mismatch` |
-
-`migrate` no acepta `--force`: una migración de estado nunca descarta datos para continuar.
-
-Mientras exista un `workspace.json` sin migrar, `install`, `update` y `remove` se detienen
-con `workspace_invalid` y no escriben nada — un proyecto nunca se opera con dos fuentes de
-verdad. `plan`, `list`, `info` y `doctor` siguen funcionando; `doctor` informa que la
-migración es necesaria.
-
-El backup es propiedad del usuario: Agent Kits no lo borra nunca.
+Un proyecto que sí se migró conserva el bloque `migration` en su lockfile, con los datos
+heredados y con los campos que ninguna versión de Agent Kits llegó a entender. Se lee y se
+vuelve a escribir intacto: es historia, y la historia se transporta.
 
 ## Seguridad
 
@@ -318,10 +294,9 @@ internal/
 ├── resolve/           resolución de dependencias
 ├── plan/              planificación determinística
 ├── install/           aplicación, lockfile y doctor
-├── migrate/           transición a lockfile v2 (temporal)
 ├── journal/           backup y rollback de una operación
 ├── adapter/           destinos por runtime
-├── workspace/         lockfile (y lector heredado en legacy.go)
+├── workspace/         lockfile
 ├── security/          rutas, límites y secretos
 ├── fsutil/            checksums y escritura atómica
 └── internaltest/      fixtures de test

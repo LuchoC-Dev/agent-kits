@@ -11,7 +11,6 @@ import (
 	"github.com/LuchoC-Dev/agent-kits/internal/git"
 	"github.com/LuchoC-Dev/agent-kits/internal/model"
 	"github.com/LuchoC-Dev/agent-kits/internal/source"
-	"github.com/LuchoC-Dev/agent-kits/internal/workspace"
 )
 
 // cmdVersion reports the build and the contracts a caller can rely on.
@@ -30,7 +29,6 @@ func (a *App) cmdVersion(args []string) error {
 		// The lockfile a previous build wrote is still readable; workspace.json is only an
 		// input to `migrate` and is never written (D-030).
 		"lock_schema_read":  []int{model.LockSchemaVersionLegacy, model.LockSchemaVersion},
-		"migrates_from":     map[string]any{"workspace.json": []int{1, workspace.SchemaVersion}},
 		"runtimes":          adapter.Names(),
 		"types":             model.Types(),
 		"error_codes":       errs.Codes(),

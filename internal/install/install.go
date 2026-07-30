@@ -55,11 +55,6 @@ func (i *Installer) Apply(p *model.Plan) (*Report, error) {
 	if p.Blocked() {
 		return nil, blockedError(p)
 	}
-	if workspace.Pending(i.Project) {
-		// Operating on a project with an unmigrated descriptor would leave two files
-		// claiming to describe the same state (D-030). The migration is the only way in.
-		return nil, workspace.PendingError()
-	}
 	report := &Report{
 		Operation: p.Operation,
 		Runtime:   p.Runtime,

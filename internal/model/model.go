@@ -445,9 +445,11 @@ type LockProject struct {
 
 // LockMigration records that this lockfile absorbed an inherited workspace.json.
 //
-// It exists so nothing is lost: every field the old descriptor carried is either mapped to
-// an operational field of the lock or preserved here verbatim, including fields no version
-// of Agent Kits ever wrote (D-031).
+// The migration that wrote it no longer exists (D-041), but the record does, and it is
+// read and written back untouched. Dropping it would delete the only trace of what a
+// project used to be — including fields no version of Agent Kits ever understood — which
+// is exactly what the migration was designed to avoid. It is history now, and history is
+// carried, not collected.
 type LockMigration struct {
 	Source              string `json:"source"`
 	SourceSchemaVersion int    `json:"source_schema_version,omitempty"`

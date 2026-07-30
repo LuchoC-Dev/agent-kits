@@ -20,10 +20,6 @@ const WorkspaceDir = ".agents"
 // LockName is the lockfile's name inside the workspace.
 const LockName = "agent-kits.lock.json"
 
-// WorkspaceFile is the inherited descriptor the retired kits-init flow used to write. No
-// adapter targets it: it survives here only so the migration can name it (D-030).
-const WorkspaceFile = "workspace.json"
-
 // Auto is the runtime selector that asks the adapter registry to detect the environment.
 const Auto = "auto"
 

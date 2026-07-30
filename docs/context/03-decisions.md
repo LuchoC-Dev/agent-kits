@@ -371,10 +371,10 @@ eliminar ni ignorar un `workspace.json` pendiente de migración.
 
 ## D-031 — La retirada de `workspace.json` usa una migración temporal y reversible
 
-**Estado:** Accepted
+**Estado:** Completada y retirada por D-041
 **Fecha:** 2026-07-30
 
-La CLI incorporará temporalmente:
+La CLI incorporó temporalmente:
 
 ```text
 agent-kits migrate --project <path> [--yes] [--json]
@@ -391,8 +391,8 @@ La migración:
 - aborta sin modificar el proyecto si encuentra ambigüedad, divergencia o datos que no
   puede preservar.
 
-`migrate` y el alias heredado `import` se retirarán en un cambio posterior expresamente
-aprobado. La copia de seguridad pertenece al usuario y no se eliminará automáticamente.
+`migrate` y el alias heredado `import` se retiraron el 2026-07-30 (D-041). La copia de
+seguridad pertenece al usuario y nunca se eliminó automáticamente.
 
 ## D-032 — El catálogo objetivo será mínimo y nativo
 
@@ -603,6 +603,39 @@ con la identidad de su dueño, que es administrador, así que sin `enforce_admin
 empujar directo a `main` y saltarse el pull request. Con él activado no puede, y como
 carece de permiso de administración tampoco puede desactivarlo. Sólo una persona, desde la
 interfaz, puede hacerlo.
+
+## D-041 — Se cierra la ventana de migración
+
+**Estado:** Accepted
+**Fecha:** 2026-07-30
+**Completa:** D-031
+
+`agent-kits migrate`, su alias `import` y el lector de `workspace.json` se eliminan.
+`internal/migrate/` y `internal/workspace/legacy.go` desaparecen enteros.
+
+**Razón:** D-031 los introdujo como transición explícitamente temporal, y la transición
+terminó. Mantener vivo un lector de un formato que ningún comando escribe es deuda que
+sólo crece: cada cambio futuro del lockfile tendría que seguir siendo compatible con un
+descriptor que nadie produce desde hace tiempo.
+
+**Qué permanece, y por qué:**
+
+- **El bloque `migration` del lockfile.** Un proyecto que se migró conserva su registro, y
+  la CLI lo lee y lo vuelve a escribir intacto, campos desconocidos incluidos. Borrarlo
+  destruiría lo único que queda de lo que ese proyecto fue — justamente lo que la
+  migración existió para preservar.
+- **La lectura de lockfiles v1.** Es independiente de `workspace.json` y cuesta unas pocas
+  líneas: un proyecto viejo se sigue actualizando solo al escribir.
+- **Los backups `.agents/workspace.json.migrated.bak`.** Son del usuario. Nunca se
+  tocaron y siguen sin tocarse.
+
+**Qué cambia para un proyecto sin migrar:** un `workspace.json` pasa a ser un archivo
+ajeno. Ningún comando lo lee, lo escribe ni se bloquea por él, y `doctor` deja de
+mencionarlo. El proyecto se comporta como cualquier otro sin lockfile: la primera
+instalación crea uno nuevo y el contenido preexistente se adopta o diverge según D-023.
+
+**Ruta de recuperación:** el tag `migration-window` marca la última build capaz de migrar.
+Quien todavía tenga un workspace heredado puede construir desde ahí, migrarlo y volver.
 
 ## Decisiones todavía necesarias
 

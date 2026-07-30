@@ -10,9 +10,9 @@ vive aparte, en `repository-private` y su espejo `repository` (D-037).
 - Rama de trabajo: `main`.
 - `origin`: `LuchoC-Dev/agent-kits`, con push habilitado desde D-040.
 - Stack: **Go, solo librería estándar** (D-016). `go.mod` no declara `require`.
-- **La CLI es la única superficie.** `kits-init`, `workspace.json` y el adaptador del
-  catálogo heredado fueron retirados (D-029, D-030, D-034). El estado de un proyecto vive
-  solo en `.agents/agent-kits.lock.json`.
+- **La CLI es la única superficie.** `kits-init`, `workspace.json`, el adaptador del
+  catálogo heredado y la migración que los retiraba ya no existen (D-029, D-030, D-034,
+  D-041). El estado de un proyecto vive solo en `.agents/agent-kits.lock.json`.
 - **El catálogo no vive acá** (D-037). Está en `LuchoC-Dev/repository-private`, y su
   espejo publicado en `LuchoC-Dev/repository`. Este repositorio es sólo la herramienta.
 
@@ -71,7 +71,8 @@ workflow de CI en el repositorio privado del catálogo (D-039).
 ### Pregunta antes
 
 - Añadir la primera dependencia externa a `go.mod` (hoy no hay ninguna, y es deliberado).
-- Cambiar el formato de `agent-kit.json` o del lockfile.
+- Cambiar el formato de `agent-kit.json` o del lockfile. El bloque `migration` es historia
+  de proyectos ya migrados: se conserva intacto, no se reinterpreta ni se descarta.
 - Cambiar el esquema del lockfile o de los manifests, o su `schema_version`.
 - Añadir o renombrar un código de error, un exit code o un flag: son contrato público.
 - Eliminar contenido heredado.

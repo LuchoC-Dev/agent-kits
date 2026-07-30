@@ -138,7 +138,7 @@ func TestApplyInstallsFilesAndLock(t *testing.T) {
 			t.Errorf("%s was not written", path)
 		}
 	}
-	if internaltest.Exists(h.project, workspace.LegacyPath) {
+	if internaltest.Exists(h.project, ".agents/workspace.json") {
 		t.Error("a normal command must never create workspace.json")
 	}
 	if got := internaltest.ReadFile(t, h.project, ".agents/skills/problem-framing/SKILL.md"); got != "# framing\n" {
@@ -169,18 +169,20 @@ func TestApplyInstallsFilesAndLock(t *testing.T) {
 	}
 }
 
-// A project that still carries an unmigrated descriptor is never written to.
-func TestApplyRefusesAProjectPendingMigration(t *testing.T) {
+// A workspace.json left in a project is now just a foreign file: the migration that used
+// to own it is gone, and nothing reads it. It must neither block an operation nor be
+// touched by one.
+func TestApplyIgnoresALeftoverWorkspaceDescriptor(t *testing.T) {
 	h := newHarness(t, sampleKit()...)
-	built := h.planInstall("context")
-	internaltest.WriteFile(t, h.project, workspace.LegacyPath, `{"$schema_version": 2}`)
+	const leftover = ".agents/workspace.json"
+	internaltest.WriteFile(t, h.project, leftover, `{"$schema_version": 2}`)
 
-	_, err := h.installer().Apply(built)
-	if errs.CodeOf(err) != errs.CodeWorkspaceInvalid {
-		t.Fatalf("err = %v, want workspace_invalid", err)
+	h.apply("context")
+	if !internaltest.Exists(h.project, ".agents/agent-kits.lock.json") {
+		t.Error("the install did not proceed")
 	}
-	if internaltest.Exists(h.project, ".agents/agent-kits.lock.json") {
-		t.Error("a project pending migration was written to")
+	if got := internaltest.ReadFile(t, h.project, leftover); got != `{"$schema_version": 2}` {
+		t.Errorf("a foreign file was modified: %q", got)
 	}
 }
 

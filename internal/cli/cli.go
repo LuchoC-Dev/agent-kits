@@ -100,8 +100,6 @@ func init() {
 		"remove":  (*App).cmdRemove,
 		"list":    (*App).cmdList,
 		"doctor":  (*App).cmdDoctor,
-		"migrate": (*App).cmdMigrate,
-		"import":  (*App).cmdImport,
 		"version": (*App).cmdVersion,
 	}
 }
@@ -123,7 +121,6 @@ project
   remove <id>...                uninstall resources and orphaned dependencies
   list                          list what this project has installed
   doctor                        diagnose sources and the project
-  migrate                       move an inherited workspace onto the lockfile
 
   version                       print version, runtimes and error codes
 

@@ -56,18 +56,6 @@ func (a *App) openProject(opts *options, needCatalog bool) (*projectContext, err
 	return ctx, nil
 }
 
-// requireMigrated refuses to change a project that still carries an unmigrated
-// workspace.json, so no command ever operates with two sources of truth (D-030).
-//
-// Read-only commands — plan, list, info, doctor — are deliberately not gated: a project
-// pending migration must still be inspectable.
-func (ctx *projectContext) requireMigrated() error {
-	if workspace.Pending(ctx.project) {
-		return workspace.PendingError()
-	}
-	return nil
-}
-
 // buildInstallPlan resolves refs and plans their installation.
 func (ctx *projectContext) buildInstallPlan(refs []string) (*model.Plan, *resolve.Result, error) {
 	resolver := resolve.New(ctx.catalog, ctx.adapter.Name())
@@ -121,9 +109,6 @@ func (a *App) cmdInstall(args []string) error {
 	if err != nil {
 		return err
 	}
-	if err := ctx.requireMigrated(); err != nil {
-		return err
-	}
 	built, _, err := ctx.buildInstallPlan(operands)
 	if err != nil {
 		return emptyCatalogHint(ctx.env, err)
@@ -144,9 +129,6 @@ func (a *App) cmdUpdate(args []string) error {
 	if err != nil {
 		return err
 	}
-	if err := ctx.requireMigrated(); err != nil {
-		return err
-	}
 	refs := operands
 	if len(refs) == 0 {
 		for _, id := range ctx.lock.RequestedIDs() {
@@ -155,7 +137,7 @@ func (a *App) cmdUpdate(args []string) error {
 	}
 	if len(refs) == 0 {
 		return errs.New(errs.CodeNotInstalled, "this project has nothing to update").
-			Hint("install something first, or run `agent-kits migrate` to adopt an existing workspace")
+			Hint("install something first")
 	}
 	built, _, err := ctx.buildInstallPlan(refs)
 	if err != nil {
@@ -179,9 +161,6 @@ func (a *App) cmdRemove(args []string) error {
 	}
 	ctx, err := a.openProject(opts, false)
 	if err != nil {
-		return err
-	}
-	if err := ctx.requireMigrated(); err != nil {
 		return err
 	}
 	built, err := ctx.planner.Remove(operands, ctx.catalog)
@@ -378,5 +357,3 @@ func (a *App) cmdDoctor(args []string) error {
 	return nil
 }
 
-// Adopting an inherited workspace lives in migrate_cmd.go: `import` is a deprecated alias
-// of `migrate` and shares its implementation (D-031).

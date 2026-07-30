@@ -401,3 +401,39 @@ func TestNewProjectIDIsAUniqueUUID(t *testing.T) {
 		t.Errorf("NewProjectID = %q, want a UUID v4", first)
 	}
 }
+
+// D-041 retired the migration, but a project that went through it keeps its record. A
+// lockfile that carries one must round-trip it untouched, unknown fields included.
+func TestMigrationRecordSurvivesTheRetiredMigration(t *testing.T) {
+	raw := []byte(`{
+	  "schema_version": 2,
+	  "project": {"id": "` + sampleID + `", "created_at": "2026-05-22T10:00:00Z"},
+	  "runtime": "agents",
+	  "generated_at": "2026-07-30T00:00:00Z",
+	  "resources": [],
+	  "migration": {
+	    "source": "workspace.json",
+	    "migrated_at": "2026-07-30T00:00:00Z",
+	    "extra": {"campo_de_otra_herramienta": {"conservar": true}},
+	    "backup": ".agents/workspace.json.migrated.bak"
+	  }
+	}`)
+	var lock Lock
+	if err := json.Unmarshal(raw, &lock); err != nil {
+		t.Fatal(err)
+	}
+	if err := lock.Validate(); err != nil {
+		t.Fatalf("Validate returned %v", err)
+	}
+
+	// Installing something else must not disturb the record.
+	proposal := lock.Proposal("agents")
+	if proposal.Migration == nil || proposal.Migration.Backup != ".agents/workspace.json.migrated.bak" {
+		t.Fatalf("a proposal dropped the migration record: %+v", proposal.Migration)
+	}
+	var unknown struct{ Conservar bool }
+	if err := json.Unmarshal(proposal.Migration.Extra["campo_de_otra_herramienta"], &unknown); err != nil ||
+		!unknown.Conservar {
+		t.Errorf("an unknown inherited field was lost: %v (%v)", proposal.Migration.Extra, err)
+	}
+}
