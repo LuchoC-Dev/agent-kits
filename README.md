@@ -32,18 +32,18 @@ documentados, para que un agente pueda consumirlo sin parsear texto.
 La referencia completa —comandos, contratos JSON, exit codes, política de conflictos y
 seguridad— está en [`docs/cli.md`](./docs/cli.md).
 
-## Qué hay en el catálogo
+## El catálogo
 
-Este repositorio también es una source: sus 75 recursos se describen con manifests
-`agent-kit.json` y se instalan con la CLI.
+Este repositorio contiene **la herramienta**, no el contenido. El catálogo vive aparte,
+porque publicar es una operación sobre contenido y no sobre código (D-037):
 
-- **7 kits** — composiciones temáticas de skills, agentes y workflows.
-- **50 skills** — unidades de capacidad agnósticas al flujo (incluye el ecosistema SDD).
-- **11 agentes** — 4 globales y 7 propiedad de un kit.
-- **7 workflows** — procesos completos de extremo a extremo.
-- **5 disciplinas** combinables — TDD, BDD, contract-first, trunk-based, SDD.
+| Repositorio | Contenido |
+|---|---|
+| `LuchoC-Dev/repository-private` | el catálogo completo: 75 recursos |
+| `LuchoC-Dev/repository` | el subconjunto publicado |
 
-Ver el [índice del catálogo](./catalog-index.md) para la lista completa.
+Nada nace público: un recurso se crea en el privado y llega al público sólo por una
+publicación explícita (D-038).
 
 ## Estructura instalada
 

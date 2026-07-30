@@ -9,12 +9,14 @@ evolucionar Agent Kits sin modificar directamente el proyecto original.
   real (`docs/context/07-cli-only-transition-plan.md`, T19).
 - Rama de trabajo: `main`.
 - `upstream`: repositorio original, configurado sin push.
-- `origin`: todavía no existe; se definirá cuando haya un repositorio colaborativo.
+- `origin`: la topología quedó fijada en D-037. El catálogo vive en dos repositorios
+  propios; este conserva sólo `upstream`, sin push.
 - Stack: **Go, solo librería estándar** (D-016). `go.mod` no declara `require`.
 - **La CLI es la única superficie.** `kits-init`, `workspace.json` y el adaptador del
   catálogo heredado fueron retirados (D-029, D-030, D-034). El estado de un proyecto vive
   solo en `.agents/agent-kits.lock.json`.
-- El catálogo es nativo: 75 recursos, un `agent-kit.json` por directorio de recurso.
+- **El catálogo no vive acá** (D-037). Está en `LuchoC-Dev/repository-private`, y su
+  espejo publicado en `LuchoC-Dev/repository`. Este repositorio es sólo la herramienta.
 
 La CLI vive en `cmd/agent-kits` e `internal/`. Su referencia es `docs/cli.md`.
 
@@ -50,8 +52,9 @@ reutilizables para agentes:
 - kits;
 - y, si se aprueba posteriormente, otros tipos expresamente documentados.
 
-La creación de recursos pertenece a otra superficie de autoría. Agent Kits no tendrá
-comandos de publicación ni escribirá en los repositorios remotos que consume.
+La creación de recursos pertenece a otra superficie de autoría. Agent Kits no tiene
+comandos de publicación ni escribe en los repositorios remotos que consume: publicar es un
+workflow de CI en el repositorio privado del catálogo (D-039).
 
 ## Reglas de trabajo
 
@@ -62,18 +65,19 @@ comandos de publicación ni escribirá en los repositorios remotos que consume.
 - Conserva la historia y el comportamiento heredado hasta que una tarea aprobada indique
   explícitamente reemplazarlo.
 - Mantén separados el catálogo público y las fuentes privadas.
-- Usa IDs canónicos globalmente únicos.
+- Distingue identidad de nombre: el `id` es un UUID que no cambia nunca, el `name` es el
+  nombre de instalación y se puede renombrar (D-035, D-036).
 - Verifica el estado Git y revisa el diff antes de cerrar una tarea.
 - Documenta supuestos, riesgos y preguntas abiertas.
 
 ### Pregunta antes
 
 - Añadir la primera dependencia externa a `go.mod` (hoy no hay ninguna, y es deliberado).
-- Cambiar el formato actual de `SKILL.md`, `pack.md` o `workspace.json`.
+- Cambiar el formato de `agent-kit.json` o del lockfile.
 - Cambiar el esquema del lockfile o de los manifests, o su `schema_version`.
 - Añadir o renombrar un código de error, un exit code o un flag: son contrato público.
 - Eliminar contenido heredado.
-- Crear o configurar un remoto `origin`.
+- Crear un repositorio remoto o configurar un remoto nuevo.
 - Cambiar reglas de versionado, compatibilidad o seguridad.
 - Incorporar un nuevo tipo de recurso o un nuevo runtime.
 

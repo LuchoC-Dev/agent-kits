@@ -487,7 +487,8 @@ Tres repositorios, creados el 2026-07-30:
 catálogo viva junto a la CLI, cada commit de la herramienta es también un commit del
 catálogo y viceversa, y la publicación no puede razonarse por separado.
 
-Los 75 recursos actuales se mudan al repositorio privado.
+Los 75 recursos se mudaron al repositorio privado el 2026-07-30, con una historia limpia:
+la evolución previa del catálogo queda en el historial de `LuchoC-Dev/agent-kits`.
 
 ## D-038 — Todo recurso nace privado; el público es un subconjunto publicado
 
