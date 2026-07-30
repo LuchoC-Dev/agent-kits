@@ -332,8 +332,8 @@ Todavía abiertas:
 
 | # | Pregunta | Estado |
 |---|---|---|
-| 4 | Registro global de reserva de IDs | el MVP valida unicidad sobre la vista agregada; la autoridad de reserva se define al incorporar sources remotas de terceros |
-| 10 | Remoto `origin` colaborativo | pendiente de acuerdo |
+| 4 | Registro global de reserva de IDs | **Resuelta** por D-035: con identidades UUID no hace falta autoridad de reserva |
+| 10 | Remoto `origin` colaborativo | **Resuelta** por D-037 y D-040: tres repositorios, creados el 2026-07-30 |
 
 ## 13. Puerta de aprobación
 

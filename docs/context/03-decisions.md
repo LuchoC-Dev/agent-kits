@@ -474,6 +474,10 @@ referencie. Un UUID desacopla las dos cosas.
 **Consecuencias:**
 
 - `D-006` se cumple por construcción: dos recursos no pueden compartir UUID.
+- **Cierra la pregunta abierta 4** (`04-specification.md §12`): no hace falta ninguna
+  autoridad central que reserve IDs entre sources de terceros. Dos autores que no se
+  conocen no pueden colisionar, porque la unicidad deja de depender de que alguien la
+  administre.
 - La pertenencia a un kit pasa a expresarse como dependencia, igual que cualquier otra.
 - Un recurso publicado conserva su UUID, así que "el mismo recurso en el privado y en el
   público" es un hecho verificable y no una coincidencia de nombres (ver D-038).
@@ -602,8 +606,6 @@ interfaz, puede hacerlo.
 
 ## Decisiones todavía necesarias
 
-- ubicación definitiva del registro global de reserva de IDs para sources remotas
-  (el MVP valida unicidad sobre la vista agregada, que alcanza para sources conocidas);
 - rangos de versión compuestos;
 - firma criptográfica de sources;
 - adaptador de Codex;
